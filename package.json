@@ -1,0 +1,53 @@
+{
+  "name": "calendar-management",
+  "version": "1.0.0",
+  "description": "API pour la gestion d'agenda immobilier",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "test": "jest --config jest.config.js"
+  },
+  "keywords": [
+    "agenda",
+    "immobilier",
+    "api",
+    "typescript"
+  ],
+  "author": "Dynastie AMOUSSOU",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "helmet": "^7.2.0",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.22"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.17.30",
+    "@types/supertest": "^6.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4",
+    "testcafe": "^3.5.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/locaccm/calendarManagement.git"
+  },
+  "bugs": {
+    "url": "https://github.com/locaccm/calendarManagement/issues"
+  },
+  "homepage": "https://github.com/locaccm/calendarManagement#readme"
+}
