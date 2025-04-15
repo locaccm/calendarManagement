@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getEvents, getEventById, createEvent, updateEvent, deleteEvent } from '../controllers/eventController';
+import {
+  getEvents,
+  getEventById,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+} from '../controllers/eventController';
 
 /**
  * @swagger
