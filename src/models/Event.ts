@@ -1,22 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity()
+@Entity({ name: 'event' })
 export class Event {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ name: 'even_id' })
   EVEN_ID!: number;
 
-  @Column({ length: 255 })
+  @Column({ name: 'evec_lib', type: 'varchar', length: 255 })
   EVEC_LIB!: string;
 
-  @Column({ type: 'date' })
+  @Column({ name: 'eved_start', type: 'date' })
   EVED_START!: string;
 
-  @Column({ type: 'date' })
+  @Column({ name: 'eved_end', type: 'date' })
   EVED_END!: string;
 
-  @Column()
+  @Column({ name: 'usen_id', type: 'int' })
   USEN_ID!: number; // Foreign key vers USER
 
-  @Column()
+  @Column({ name: 'accn_id', type: 'int' })
   ACCN_ID!: number; // Foreign key vers ACCOMMODATION
 }
