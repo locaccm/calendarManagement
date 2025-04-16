@@ -59,7 +59,18 @@ if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
-// Routes placeholder
+// Importation des routes événements
+import eventRoutes from './routes/eventRoutes';
+
+// Montage des routes événements
+app.use('/', eventRoutes);
+
+// Route health check
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Route racine
 app.get('/', (req, res) => {
   res.send('API Calendar Management');
 });
