@@ -65,6 +65,10 @@ import eventRoutes from './routes/eventRoutes';
 // Montage des routes événements
 app.use('/', eventRoutes);
 
+// Montage des routes owner calendar
+import ownerCalendarRoutes from './routes/ownerCalendarRoutes';
+app.use('/', ownerCalendarRoutes);
+
 // Route health check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
