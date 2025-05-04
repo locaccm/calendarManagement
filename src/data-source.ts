@@ -1,9 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Event } from './models/Event';
-
-
-
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -29,5 +26,5 @@ export const AppDataSource = new DataSource(
         entities: [Event],
         synchronize: true,
         logging: false,
-      }
+      },
 );
