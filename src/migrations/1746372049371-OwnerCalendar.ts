@@ -5,7 +5,7 @@ export class OwnerCalendar1746372049371 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "event" (
+      CREATE TABLE "EVENT" (
         "even_id" SERIAL NOT NULL,
         "evec_lib" character varying(255) NOT NULL,
         "eved_start" date NOT NULL,
@@ -28,6 +28,6 @@ export class OwnerCalendar1746372049371 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP TABLE "owner_calendar";');
-    await queryRunner.query('DROP TABLE "event";');
+    await queryRunner.query('DROP TABLE "EVENT";');
   }
 }
