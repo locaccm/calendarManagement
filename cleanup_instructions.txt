@@ -1,0 +1,10 @@
+Supprimer les fichiers suivants car ils ne sont pas nécessaires pour une base déjà existante et une API centrée sur EVENT :
+- src/models/User.ts
+- src/models/Accommodation.ts
+- src/models/OwnerCalendar.ts
+- src/controllers/ownerCalendarController.ts
+- src/routes/ownerCalendarRoutes.ts
+- src/swagger/ownerCalendar.schema.yaml
+- Toutes les migrations TypeORM sauf celles éventuellement liées à EVENT
+
+Vérifier que src/models/Event.ts ne contient que la définition de la table EVENT.
