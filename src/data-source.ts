@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Event } from './models/Event';
-import { OwnerCalendar } from './models/OwnerCalendar';
-import { User } from './models/User';
-import { Accommodation } from './models/Accommodation';
+
+
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -26,7 +26,7 @@ export const AppDataSource = new DataSource(
         username: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'postgres',
         database: process.env.DB_NAME || 'calendar_db',
-        entities: [Event, OwnerCalendar, User, Accommodation],
+        entities: [Event],
         synchronize: true,
         logging: false,
       }
