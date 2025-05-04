@@ -18,9 +18,15 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
+// Enable Content Security Policy for better security. Adjust directives as needed for your frontend.
 app.use(
   helmet({
-    contentSecurityPolicy: false, // à adapter selon le frontend
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // Add other directives (scriptSrc, imgSrc, etc.) as needed for your frontend
+      },
+    },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );
