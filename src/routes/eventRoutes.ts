@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import {
-  getEvents,
-  getEventById,
-  createEvent,
-  updateEvent,
-  deleteEvent,
+import { 
+  getEvents, 
+  getEventById, 
+  createEvent, 
+  updateEvent, 
+  deleteEvent, 
+  getFilteredEvents 
 } from '../controllers/eventController';
 
 /**
@@ -110,5 +111,46 @@ router.put('/events/:id', updateEvent);
  *         description: Événement non trouvé
  */
 router.delete('/events/:id', deleteEvent);
+
+/**
+ * @swagger
+ * /events/filter:
+ *   get:
+ *     summary: Filtrer les événements
+ *     tags: [Events]
+ *     parameters:
+ *       - in: query
+ *         name: usager
+ *         schema:
+ *           type: integer
+ *         description: ID de l'usager (locataire)
+ *       - in: query
+ *         name: logement
+ *         schema:
+ *           type: integer
+ *         description: ID du logement
+ *       - in: query
+ *         name: dateStart
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date de début (YYYY-MM-DD)
+ *       - in: query
+ *         name: dateEnd
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date de fin (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Liste filtrée des événements
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Event'
+ */
+router.get('/events/filter', getFilteredEvents);
 
 export default router;

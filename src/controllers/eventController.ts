@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../data-source';
+import { Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
 import { Event } from '../models/Event';
 
 function handleError(res: Response, message: string) {
@@ -13,6 +14,28 @@ export const getEvents = async (req: Request, res: Response) => {
     res.json(events);
   } catch (error) {
     handleError(res, 'Erreur lors de la récupération des événements.');
+  }
+};
+
+// GET /events/filter?usager=1&logement=2&dateStart=2025-05-01&dateEnd=2025-05-31
+export const getFilteredEvents = async (req: Request, res: Response) => {
+  try {
+    const eventRepo = AppDataSource.getRepository(Event);
+    const { usager, logement, dateStart, dateEnd } = req.query;
+    const where: any = {};
+    if (usager) where.USEN_ID = Number(usager);
+    if (logement) where.ACCN_ID = Number(logement);
+    if (dateStart && dateEnd) {
+      where.EVED_START = Between(dateStart, dateEnd);
+    } else if (dateStart) {
+      where.EVED_START = MoreThanOrEqual(dateStart);
+    } else if (dateEnd) {
+      where.EVED_START = LessThanOrEqual(dateEnd);
+    }
+    const events = await eventRepo.find({ where });
+    res.json(events);
+  } catch (error) {
+    handleError(res, 'Erreur lors du filtrage des événements.');
   }
 };
 
