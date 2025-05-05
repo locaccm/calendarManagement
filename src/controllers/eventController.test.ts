@@ -126,19 +126,57 @@ describe('eventController', () => {
 
   // --- createEvent ---
   describe('createEvent', () => {
-    it('should create event', async () => {
+    it('should create event if no conflict', async () => {
       const event = { EVEN_ID: 1 };
+      mockRepo.find.mockResolvedValue([]); // no conflict
       mockRepo.create.mockReturnValue(event);
       mockRepo.save.mockResolvedValue(event);
-      req.body = { EVEC_LIB: 'Test', EVED_START: '2025-05-01', EVED_END: '2025-05-02', USEN_ID: 1, ACCN_ID: 2 };
+      req.body = { EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2 };
       await createEvent(req, res);
       expect(mockRepo.create).toHaveBeenCalledWith(req.body);
       expect(mockRepo.save).toHaveBeenCalledWith(event);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(event);
     });
+    it('should detect conflict and return 409 with alternatives', async () => {
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = { EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2 };
+      await createEvent(req, res);
+      expect(res.status).toHaveBeenCalledWith(409);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.error).toMatch(/conflit/i);
+      expect(Array.isArray(resp.alternatives)).toBe(true);
+    });
+    it('should suggest alternatives with custom duration and maxSuggestions', async () => {
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = {
+        EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2,
+        suggestionDuration: 120, maxSuggestions: 2
+      };
+      await createEvent(req, res);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.alternatives.length).toBeLessThanOrEqual(2);
+      if (resp.alternatives.length) {
+        const slot = resp.alternatives[0];
+        expect(slot.start).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
+        expect(slot.end).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
+      }
+    });
+    it('should not suggest alternatives if impossible (negative duration)', async () => {
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = {
+        EVEC_LIB: 'Test', EVED_START: '2025-05-01T10:00', EVED_END: '2025-05-01T09:00', USEN_ID: 1, ACCN_ID: 2
+      };
+      await createEvent(req, res);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.alternatives.length).toBe(0);
+    });
     it('should handle error', async () => {
-      mockRepo.create.mockImplementation(() => { throw new Error('fail'); });
+      mockRepo.find.mockRejectedValue(new Error('fail'));
+      req.body = { EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2 };
       await createEvent(req, res);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: expect.any(String) });
@@ -147,18 +185,64 @@ describe('eventController', () => {
 
   // --- updateEvent ---
   describe('updateEvent', () => {
-    it('should update event', async () => {
+    it('should update event if no conflict', async () => {
       req.params.id = '1';
       const event = { EVEN_ID: 1 };
       mockRepo.findOneBy.mockResolvedValue(event);
+      mockRepo.find.mockResolvedValue([]); // no conflict
       mockRepo.merge.mockReturnValue(undefined);
       mockRepo.save.mockResolvedValue(event);
-      req.body = { EVEC_LIB: 'Updated' };
+      req.body = { EVEC_LIB: 'Updated', EVED_START: '2025-05-01T11:00', EVED_END: '2025-05-01T12:00', USEN_ID: 1, ACCN_ID: 2 };
       await updateEvent(req, res);
       expect(mockRepo.findOneBy).toHaveBeenCalledWith({ EVEN_ID: 1 });
       expect(mockRepo.merge).toHaveBeenCalledWith(event, req.body);
       expect(mockRepo.save).toHaveBeenCalledWith(event);
       expect(res.json).toHaveBeenCalledWith(event);
+    });
+    it('should detect conflict and return 409 with alternatives', async () => {
+      req.params.id = '1';
+      const event = { EVEN_ID: 1, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.findOneBy.mockResolvedValue(event);
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = { EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2 };
+      await updateEvent(req, res);
+      expect(res.status).toHaveBeenCalledWith(409);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.error).toMatch(/conflit/i);
+      expect(Array.isArray(resp.alternatives)).toBe(true);
+    });
+    it('should suggest alternatives with custom duration and maxSuggestions', async () => {
+      req.params.id = '1';
+      const event = { EVEN_ID: 1, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.findOneBy.mockResolvedValue(event);
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = {
+        EVEC_LIB: 'Test', EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00', USEN_ID: 1, ACCN_ID: 2,
+        suggestionDuration: 30, maxSuggestions: 1
+      };
+      await updateEvent(req, res);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.alternatives.length).toBeLessThanOrEqual(1);
+      if (resp.alternatives.length) {
+        const slot = resp.alternatives[0];
+        expect(slot.start).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
+        expect(slot.end).toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
+      }
+    });
+    it('should not suggest alternatives if impossible (negative duration)', async () => {
+      req.params.id = '1';
+      const event = { EVEN_ID: 1, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      const conflictingEvent = { EVEN_ID: 2, ACCN_ID: 2, USEN_ID: 1, EVED_START: '2025-05-01T09:00', EVED_END: '2025-05-01T10:00' };
+      mockRepo.findOneBy.mockResolvedValue(event);
+      mockRepo.find.mockResolvedValue([conflictingEvent]);
+      req.body = {
+        EVEC_LIB: 'Test', EVED_START: '2025-05-01T10:00', EVED_END: '2025-05-01T09:00', USEN_ID: 1, ACCN_ID: 2
+      };
+      await updateEvent(req, res);
+      const resp = res.json.mock.calls[0][0];
+      expect(resp.alternatives.length).toBe(0);
     });
     it('should return 404 if event not found', async () => {
       req.params.id = '1';
