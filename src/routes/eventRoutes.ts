@@ -7,6 +7,7 @@ import {
   deleteEvent, 
   getFilteredEvents 
 } from '../controllers/eventController';
+import { getEventsForDay, getEventsForWeek, getEventsForMonth } from '../controllers/calendarViewController';
 
 /**
  * @swagger
@@ -152,5 +153,10 @@ router.delete('/events/:id', deleteEvent);
  *                 $ref: '#/components/schemas/Event'
  */
 router.get('/events/filter', getFilteredEvents);
+
+// Endpoints pour la vue calendrier (jour, semaine, mois)
+router.get('/day', getEventsForDay);
+router.get('/week', getEventsForWeek);
+router.get('/month', getEventsForMonth);
 
 export default router;

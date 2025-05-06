@@ -1,0 +1,147 @@
+  console.log
+    DAY: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:72:13)
+
+  console.log
+    DAY400: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:85:13)
+
+  console.log
+    WEEK: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:93:13)
+
+  console.log
+    WEEK400: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:103:13)
+
+  console.log
+    MONTH: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:111:13)
+
+  console.log
+    MONTH400: { error: "Erreur lors de la récupération de l'événement." } 500
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:121:13)
+
+FAIL src/controllers/calendarViewController.test.ts
+  Calendar View Endpoints
+    ✕ GET /events/day returns events for a day (86 ms)
+    ✕ GET /events/day returns 400 if date missing (19 ms)
+    ✕ GET /events/week returns events for a week (23 ms)
+    ✕ GET /events/week returns 400 if params missing (15 ms)
+    ✕ GET /events/month returns events for a month (25 ms)
+    ✕ GET /events/month returns 400 if params missing (13 ms)
+    ✓ handles server error (21 ms)
+
+  ● Calendar View Endpoints › GET /events/day returns events for a day
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      71 |     const res = await request(app).get('/events/day?date=2025-05-05');
+      72 |     console.log('DAY:', res.body, res.status);
+    > 73 |     expect(res.status).toBe(200);
+         |                        ^
+      74 |     if (res.status !== 200) {
+      75 |       console.log('SERVER ERROR LOGS:', errorLogs);
+      76 |     }
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:73:24)
+
+  ● Calendar View Endpoints › GET /events/day returns 400 if date missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      84 |     const res = await request(app).get('/events/day');
+      85 |     console.log('DAY400:', res.body, res.status);
+    > 86 |     expect(res.status).toBe(400);
+         |                        ^
+      87 |     expect(res.body.error).toBeDefined();
+      88 |   });
+      89 |
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:86:24)
+
+  ● Calendar View Endpoints › GET /events/week returns events for a week
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      92 |     const res = await request(app).get('/events/week?week=19&year=2025');
+      93 |     console.log('WEEK:', res.body, res.status);
+    > 94 |     expect(res.status).toBe(200);
+         |                        ^
+      95 |     expect(Array.isArray(res.body)).toBe(true);
+      96 |     expect(mockRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+      97 |       where: expect.objectContaining({ EVED_START: expect.any(Object) }),
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:94:24)
+
+  ● Calendar View Endpoints › GET /events/week returns 400 if params missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      102 |     const res = await request(app).get('/events/week?year=2025');
+      103 |     console.log('WEEK400:', res.body, res.status);
+    > 104 |     expect(res.status).toBe(400);
+          |                        ^
+      105 |     expect(res.body.error).toBeDefined();
+      106 |   });
+      107 |
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:104:24)
+
+  ● Calendar View Endpoints › GET /events/month returns events for a month
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      110 |     const res = await request(app).get('/events/month?month=5&year=2025');
+      111 |     console.log('MONTH:', res.body, res.status);
+    > 112 |     expect(res.status).toBe(200);
+          |                        ^
+      113 |     expect(Array.isArray(res.body)).toBe(true);
+      114 |     expect(mockRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+      115 |       where: expect.objectContaining({ EVED_START: expect.any(Object) }),
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:112:24)
+
+  ● Calendar View Endpoints › GET /events/month returns 400 if params missing
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 500
+
+      120 |     const res = await request(app).get('/events/month?year=2025');
+      121 |     console.log('MONTH400:', res.body, res.status);
+    > 122 |     expect(res.status).toBe(400);
+          |                        ^
+      123 |     expect(res.body.error).toBeDefined();
+      124 |   });
+      125 |
+
+      at Object.<anonymous> (src/controllers/calendarViewController.test.ts:122:24)
+
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 1 passed, 7 total
+Snapshots:   0 total
+Time:        2.728 s, estimated 3 s
+Ran all test suites matching /src\/controllers\/calendarViewController.test.ts/i.
