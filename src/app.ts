@@ -1,13 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
+import './loadEnv';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import 'reflect-metadata';
 
 // Chargement des variables d'environnement
-dotenv.config();
+
 
 const app = express();
 app.use(express.json());
@@ -80,5 +80,12 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.send('API Calendar Management');
 });
+
+import { errorHandler } from './middleware/errorHandler';
+
+// ... (autres middlewares et routes)
+
+// Centralisation de la gestion des erreurs
+app.use(errorHandler);
 
 export default app;

@@ -1,15 +1,19 @@
-import 'reflect-metadata';
 import app from './app';
-import { AppDataSource } from './data-source';
+import prisma from './prisma';
 
 const PORT = process.env.PORT || 3000;
 
-AppDataSource.initialize()
-  .then(() => {
+async function startServer() {
+  try {
+    // Prisma est automatiquement connecté lors de l'importation
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
-    console.error('Erreur lors de la connexion à la base de données:', error);
-  });
+  } catch (error: unknown) {
+    console.error('Erreur lors du démarrage du serveur:', error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
+}
+
+startServer();
