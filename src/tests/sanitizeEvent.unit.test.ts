@@ -11,11 +11,9 @@ describe('sanitizeEvent', () => {
       ACCN_ID: 1,
     };
     const res = sanitizeEvent(input);
-    expect(res.DATE_START).toBe('2025-06-01');
-    expect(res.DATE_END).toBe('2025-06-01');
-    expect(res.DATE_START).toBe(res.DATE_END);
-    expect(res.START_TIME).toBe('09:00');
-    expect(res.END_TIME).toBe('11:00');
+    // Les dates sont maintenant toujours au format ISO complet
+    expect(res.EVED_START).toBe('2025-06-01T09:00:00.000Z');
+    expect(res.EVED_END).toBe('2025-06-01T11:00:00.000Z');
   });
 
   it('retourne les bons champs date/heure pour plusieurs jours', () => {
@@ -28,11 +26,10 @@ describe('sanitizeEvent', () => {
       ACCN_ID: 2,
     };
     const res = sanitizeEvent(input);
-    expect(res.DATE_START).toBe('2025-06-01');
-    expect(res.DATE_END).toBe('2025-06-03');
-    expect(res.DATE_START).not.toBe(res.DATE_END);
-    expect(res.START_TIME).toBe('09:00');
-    expect(res.END_TIME).toBe('18:00');
+    // Les dates sont maintenant toujours au format ISO complet
+    expect(res.EVED_START).toBe('2025-06-01T09:00:00.000Z');
+    expect(res.EVED_END).toBe('2025-06-03T18:00:00.000Z');
+    expect(res.EVED_START).not.toBe(res.EVED_END);
   });
 
   it('gère les valeurs null ou invalides', () => {
@@ -45,9 +42,8 @@ describe('sanitizeEvent', () => {
       ACCN_ID: 3,
     };
     const res = sanitizeEvent(input);
-    expect(res.DATE_START).toBe('');
-    expect(res.DATE_END).toBe('');
-    expect(res.START_TIME).toBe('');
-    expect(res.END_TIME).toBe('');
+    // Les valeurs null sont converties en chaînes vides
+    expect(res.EVED_START).toBe('');
+    expect(res.EVED_END).toBe('');
   });
 });

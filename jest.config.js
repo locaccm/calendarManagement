@@ -10,4 +10,8 @@ module.exports = {
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {}],
   },
+  // Exécuter tous les tests sans exception
+  testPathIgnorePatterns: [
+    "/node_modules/"
+  ],
 };

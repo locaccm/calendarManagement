@@ -59,20 +59,28 @@ describe('Calendar View Controller', () => {
 
       // Assert
       expect(typedPrismaMock.event.findMany).toHaveBeenCalledWith(
-  expect.objectContaining({
-    where: expect.objectContaining({
-      EVED_START: expect.anything(),
-    }),
-    orderBy: expect.objectContaining({ EVED_START: 'asc' }),
-  })
-);
+        expect.objectContaining({
+          where: expect.objectContaining({
+            EVED_START: expect.anything(),
+          }),
+          orderBy: expect.objectContaining({ EVED_START: 'asc' }),
+        }),
+      );
       expect(mockResponse.json).toHaveBeenCalledWith(
-  mockEvents.map(e => expect.objectContaining({
-    ...e,
-    EVED_START: e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
-    EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
-  }))
-);
+        expect.objectContaining({
+          date: expect.any(String),
+          events: expect.arrayContaining(
+            mockEvents.map((e) =>
+              expect.objectContaining({
+                ...e,
+                EVED_START:
+                  e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
+                EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
+              }),
+            ),
+          ),
+        }),
+      );
     });
 
     it('should return 400 if date is missing', async () => {
@@ -102,7 +110,7 @@ describe('Calendar View Controller', () => {
 
       // Assert
       // Peut être 400 (validation) ou 500 (erreur technique)
-      expect((mockResponse.status as jest.Mock)).toHaveBeenCalledTimes(1);
+      expect(mockResponse.status as jest.Mock).toHaveBeenCalledTimes(1);
       const callArg = (mockResponse.status as jest.Mock).mock.calls[0][0];
       expect([400, 500]).toContain(callArg);
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -148,20 +156,32 @@ describe('Calendar View Controller', () => {
             EVED_START: expect.anything(),
           }),
           orderBy: expect.objectContaining({ EVED_START: 'asc' }),
-        })
+        }),
       );
       expect(mockResponse.json).toHaveBeenCalledWith(
-        mockEvents.map(e => expect.objectContaining({
-          ...e,
-          EVED_START: e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
-          EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
-        }))
+        expect.objectContaining({
+          week: expect.any(Number),
+          year: expect.any(Number),
+          startDate: expect.any(String),
+          endDate: expect.any(String),
+          days: expect.any(Array),
+          events: expect.arrayContaining(
+            mockEvents.map((e) =>
+              expect.objectContaining({
+                ...e,
+                EVED_START:
+                  e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
+                EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
+              }),
+            ),
+          ),
+        }),
       );
     });
 
-    it('should return 400 if week or year is missing', async () => {
+    it('should return 400 if date, week, or year is missing', async () => {
       // Arrange
-      mockRequest.query = { year: '2025' }; // week is missing
+      mockRequest.query = { year: '2025' }; // week and date are missing
 
       // Act
       await getEventsForWeek(mockRequest as Request, mockResponse as Response);
@@ -170,10 +190,43 @@ describe('Calendar View Controller', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: expect.stringContaining('week and year are required'),
+          error: expect.stringContaining('Either date'),
         }),
       );
       expect(typedPrismaMock.event.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should accept date parameter instead of week/year', async () => {
+      // Arrange
+      const mockEvents = [
+        {
+          EVEN_ID: 1,
+          EVEC_LIB: 'Test Event 1',
+          EVED_START: new Date('2025-05-05T10:00:00Z'),
+          EVED_END: new Date('2025-05-05T12:00:00Z'),
+          USEN_ID: 1,
+          ACCN_ID: 1,
+        },
+      ];
+
+      mockRequest.query = { date: '2025-05-05' }; // Using date instead of week/year
+      typedPrismaMock.event.findMany.mockResolvedValue(mockEvents);
+
+      // Act
+      await getEventsForWeek(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(typedPrismaMock.event.findMany).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          week: expect.any(Number),
+          year: expect.any(Number),
+          startDate: expect.any(String),
+          endDate: expect.any(String),
+          days: expect.any(Array),
+          events: expect.any(Array),
+        }),
+      );
     });
 
     it('should handle errors', async () => {
@@ -185,10 +238,8 @@ describe('Calendar View Controller', () => {
       await getEventsForWeek(mockRequest as Request, mockResponse as Response);
 
       // Assert
-      expect((mockResponse.status as jest.Mock)).toHaveBeenCalledTimes(1);
+      expect(mockResponse.status as jest.Mock).toHaveBeenCalledTimes(1);
       const callArg = (mockResponse.status as jest.Mock).mock.calls[0][0];
-      expect((mockResponse.status as jest.Mock)).toHaveBeenCalledTimes(1);
-      const callArg2 = (mockResponse.status as jest.Mock).mock.calls[0][0];
       expect([400, 500]).toContain(callArg);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -233,20 +284,33 @@ describe('Calendar View Controller', () => {
             EVED_START: expect.anything(),
           }),
           orderBy: expect.objectContaining({ EVED_START: 'asc' }),
-        })
+        }),
       );
       expect(mockResponse.json).toHaveBeenCalledWith(
-        mockEvents.map(e => expect.objectContaining({
-          ...e,
-          EVED_START: e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
-          EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
-        }))
+        expect.objectContaining({
+          month: expect.any(Number),
+          year: expect.any(Number),
+          startDate: expect.any(String),
+          endDate: expect.any(String),
+          days: expect.any(Array),
+          daysInMonth: expect.any(Number),
+          events: expect.arrayContaining(
+            mockEvents.map((e) =>
+              expect.objectContaining({
+                ...e,
+                EVED_START:
+                  e.EVED_START instanceof Date ? e.EVED_START.toISOString() : e.EVED_START,
+                EVED_END: e.EVED_END instanceof Date ? e.EVED_END.toISOString() : e.EVED_END,
+              }),
+            ),
+          ),
+        }),
       );
     });
 
-    it('should return 400 if month or year is missing', async () => {
+    it('should return 400 if date, month, or year is missing', async () => {
       // Arrange
-      mockRequest.query = { year: '2025' }; // month is missing
+      mockRequest.query = { year: '2025' }; // month and date are missing
 
       // Act
       await getEventsForMonth(mockRequest as Request, mockResponse as Response);
@@ -255,10 +319,44 @@ describe('Calendar View Controller', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: expect.stringContaining('month and year are required'),
+          error: expect.stringContaining('Either date'),
         }),
       );
       expect(typedPrismaMock.event.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should accept date parameter instead of month/year', async () => {
+      // Arrange
+      const mockEvents = [
+        {
+          EVEN_ID: 1,
+          EVEC_LIB: 'Test Event 1',
+          EVED_START: new Date('2025-05-10T10:00:00Z'),
+          EVED_END: new Date('2025-05-10T12:00:00Z'),
+          USEN_ID: 1,
+          ACCN_ID: 1,
+        },
+      ];
+
+      mockRequest.query = { date: '2025-05-10' }; // Using date instead of month/year
+      typedPrismaMock.event.findMany.mockResolvedValue(mockEvents);
+
+      // Act
+      await getEventsForMonth(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(typedPrismaMock.event.findMany).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          month: expect.any(Number),
+          year: expect.any(Number),
+          startDate: expect.any(String),
+          endDate: expect.any(String),
+          days: expect.any(Array),
+          daysInMonth: expect.any(Number),
+          events: expect.any(Array),
+        }),
+      );
     });
 
     it('should handle errors', async () => {
@@ -270,10 +368,8 @@ describe('Calendar View Controller', () => {
       await getEventsForMonth(mockRequest as Request, mockResponse as Response);
 
       // Assert
-      expect((mockResponse.status as jest.Mock)).toHaveBeenCalledTimes(1);
+      expect(mockResponse.status as jest.Mock).toHaveBeenCalledTimes(1);
       const callArg = (mockResponse.status as jest.Mock).mock.calls[0][0];
-      expect((mockResponse.status as jest.Mock)).toHaveBeenCalledTimes(1);
-      const callArg2 = (mockResponse.status as jest.Mock).mock.calls[0][0];
       expect([400, 500]).toContain(callArg);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({

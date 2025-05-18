@@ -2,13 +2,15 @@
   "name": "calendar-management",
   "version": "1.0.0",
   "description": "API pour la gestion d'agenda immobilier",
-  "main": "dist/app.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "prod": "cross-env NODE_ENV=production node dist/app.js",
-    "start": "node dist/app.js",
-    "dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only src/app.ts",
-    "test": "cross-env NODE_ENV=test jest --config jest.config.js",
+    "clean-tests": "rm -rf dist/tests",
+    "build:clean": "npm run build && npm run clean-tests",
+    "prod": "cross-env NODE_ENV=production node dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "cross-env NODE_ENV=development ts-node-dev --respawn --transpile-only src/index.ts",
+    "test": "cross-env NODE_ENV=test jest --config jest.config.js 'src/**/*.test.ts'",
     "seed": "ts-node prisma/seed.ts",
     "lint": "eslint 'src/**/*.{js,ts}' --fix",
     "format": "prettier --write 'src/**/*.{js,ts,json,md}'"
@@ -23,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.7.0",
+    "axios": "^1.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
