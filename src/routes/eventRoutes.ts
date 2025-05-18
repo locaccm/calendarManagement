@@ -115,6 +115,9 @@ const router = Router();
  */
 router.get('/fr/evenements/filtrer', getFilteredEvents);
 
+// Route pour les tests
+router.get('/events/filter', getFilteredEvents);
+
 /**
  * @swagger
  * /en/events/filter:
@@ -211,6 +214,9 @@ router.get('/en/events/filter', getFilteredEvents);
  *       200:
  *         description: Retourne la liste des événements
  */
+
+// Route pour les tests
+router.get('/events', getEvents);
 router.get('/fr/evenements', getEvents);
 
 /**

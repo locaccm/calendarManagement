@@ -16,8 +16,12 @@ const eventBaseSchema = z.object({
     .string()
     .regex(/^\d{2}:\d{2}$/, 'Format heure attendu HH:mm')
     .optional(),
-  USEN_ID: z.number({ invalid_type_error: 'USEN_ID doit être un nombre' }),
-  ACCN_ID: z.number({ invalid_type_error: 'ACCN_ID doit être un nombre' }),
+  USEN_ID: z.number().refine((val) => typeof val === 'number', {
+    message: 'USEN_ID doit être un nombre',
+  }),
+  ACCN_ID: z.number().refine((val) => typeof val === 'number', {
+    message: 'ACCN_ID doit être un nombre',
+  }),
 });
 
 export const eventCreateSchema = eventBaseSchema.refine(

@@ -273,4 +273,4 @@ L'API de Gestion de Calendrier ne gère pas l'authentification directement. Elle
 
 ## 👤 Auteur
 
-Projet Master CCM LocaTech
+Dynastie AMOUSSOU - Projet Master CCM LocaTech

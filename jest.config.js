@@ -1,5 +1,7 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 module.exports = {
+  // Spécifier un répertoire temporaire pour les rapports de couverture
+  coverageDirectory: './tmp/coverage',
   coveragePathIgnorePatterns: [
     '/node_modules/',
     'src/migrations/',
