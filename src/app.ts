@@ -55,14 +55,14 @@ const swaggerOptions = {
         Event: {
           type: 'object',
           properties: {
-            EVEN_ID: { type: 'integer', description: "ID de l'événement (auto-incrémenté)" },
-            EVEC_LIB: { type: 'string', description: "Libellé de l'événement" },
+            evenId: { type: 'integer', description: "ID de l'événement (auto-incrémenté)" },
+            evecLib: { type: 'string', description: "Libellé de l'événement" },
             EVED_START: { type: 'string', format: 'date', description: 'Date de début' },
             EVED_END: { type: 'string', format: 'date', description: 'Date de fin' },
             USEN_ID: { type: 'integer', description: 'ID utilisateur (FK)' },
             ACCN_ID: { type: 'integer', description: 'ID logement (FK)' },
           },
-          required: ['EVEC_LIB', 'EVED_START', 'EVED_END', 'USEN_ID', 'ACCN_ID'],
+          required: ['evecLib', 'EVED_START', 'EVED_END', 'USEN_ID', 'ACCN_ID'],
         },
       },
     },
@@ -74,7 +74,6 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
-
 // Importation des routes événements
 import eventRoutes from './routes/eventRoutes';
 
