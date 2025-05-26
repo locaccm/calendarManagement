@@ -26,5 +26,5 @@ export const AppDataSource = new DataSource(
         entities: [Event],
         synchronize: true,
         logging: false,
-      }
+      },
 );

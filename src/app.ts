@@ -18,9 +18,25 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
+// Configuration de Helmet avec une politique de sécurité adaptée à l'API
 app.use(
   helmet({
-    contentSecurityPolicy: false, // à adapter selon le frontend
+    // Configuration de la CSP avec des règles minimales mais sécurisées
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        // Autoriser les connexions WebSocket pour le développement
+        connectSrc: ["'self'", ...(process.env.NODE_ENV !== 'production' ? ['ws:'] : [])],
+        // Autoriser les scripts inline pour Swagger UI en développement
+        scriptSrc: [
+          "'self'",
+          ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
+        ],
+        // Autoriser les styles inline pour Swagger UI
+        styleSrc: ["'self'", "'unsafe-inline'"],
+      },
+    },
+    // Permettre le partage de ressources cross-origin pour l'API
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );

@@ -10,6 +10,6 @@ AppDataSource.initialize()
       console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error('Erreur lors de la connexion à la base de données:', error);
   });
