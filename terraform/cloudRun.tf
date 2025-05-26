@@ -21,6 +21,5 @@ module "cloud_run_calendarmanagement-service_invokers" {
   invokers = {
     frontend            = "frontend-service@intricate-pad-455413-f7.iam.gserviceaccount.com"
     authentification    = "auth-service@intricate-pad-455413-f7.iam.gserviceaccount.com"
-    notification        = "notification-service@intricate-pad-455413-f7.iam.gserviceaccount.com"
   }
 }
