@@ -45,10 +45,7 @@
     "eslint": "^9.24.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
-    "jest": {
-      "testPathIgnorePatterns": ["/dist/"],
-      "testMatch": ["**/src/tests/**/*.test.js", "**/src/tests/**/*.test.ts"]
-    },
+    "jest": "^29.7.0",
     "prettier": "^3.5.3",
     "supertest": "^6.3.4",
     "testcafe": "^3.5.0",
