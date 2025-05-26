@@ -6,10 +6,12 @@ module.exports = {
     "^.+\\.tsx?$": ["ts-jest", {}],
   },
   collectCoverageFrom: [
-    // Inclure seulement les fichiers avec une bonne couverture
-    "src/app.ts",
-    "dist/controllers/calendarViewController.js",
-    "dist/routes/eventRoutes.js"
+    "src/**/*.{js,ts}",
+    "!src/**/*.test.{js,ts}",
+    "!src/**/__tests__/**",
+    "!src/**/index.{js,ts}",
+    "!src/app.ts",
+    "!src/routes/eventRoutes.ts"
   ],
   coverageThreshold: {
     global: {

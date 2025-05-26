@@ -5,7 +5,7 @@ describe('Date Utils', () => {
 
   beforeEach(() => {
     jest.resetModules();
-    dateUtils = require('../../dist/utils/dateUtils');
+    dateUtils = require('../dateUtils');
   });
 
   describe('formatDateToFrench', () => {
