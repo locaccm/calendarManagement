@@ -11,7 +11,7 @@ import {
  * @swagger
  * tags:
  *   name: Events
- *   description: Gestion des événements
+ *   description: Event management
  */
 const router = Router();
 
@@ -19,11 +19,11 @@ const router = Router();
  * @swagger
  * /events:
  *   get:
- *     summary: Liste des événements
+ *     summary: List of events
  *     tags: [Events]
  *     responses:
  *       200:
- *         description: Retourne la liste des événements
+ *         description: Returns the list of events
  */
 router.get('/events', getEvents);
 
@@ -31,7 +31,7 @@ router.get('/events', getEvents);
  * @swagger
  * /events/{id}:
  *   get:
- *     summary: Récupérer un événement par ID
+ *     summary: Retrieve an event by ID
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -41,9 +41,9 @@ router.get('/events', getEvents);
  *           type: integer
  *     responses:
  *       200:
- *         description: Détail de l'événement
+ *         description: Event details
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  */
 router.get('/events/:id', getEventById);
 
@@ -51,7 +51,7 @@ router.get('/events/:id', getEventById);
  * @swagger
  * /events:
  *   post:
- *     summary: Créer un événement
+ *     summary: Create an event
  *     tags: [Events]
  *     requestBody:
  *       required: true
@@ -61,7 +61,7 @@ router.get('/events/:id', getEventById);
  *             $ref: '#/components/schemas/Event'
  *     responses:
  *       201:
- *         description: Événement créé
+ *         description: Event created
  */
 router.post('/events', createEvent);
 
@@ -69,7 +69,7 @@ router.post('/events', createEvent);
  * @swagger
  * /events/{id}:
  *   put:
- *     summary: Mettre à jour un événement
+ *     summary: Update an event
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -85,9 +85,9 @@ router.post('/events', createEvent);
  *             $ref: '#/components/schemas/Event'
  *     responses:
  *       200:
- *         description: Événement mis à jour
+ *         description: Event updated
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  */
 router.put('/events/:id', updateEvent);
 
@@ -95,7 +95,7 @@ router.put('/events/:id', updateEvent);
  * @swagger
  * /events/{id}:
  *   delete:
- *     summary: Supprimer un événement
+ *     summary: Delete an event
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -105,9 +105,9 @@ router.put('/events/:id', updateEvent);
  *           type: integer
  *     responses:
  *       200:
- *         description: Événement supprimé
+ *         description: Event deleted
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  */
 router.delete('/events/:id', deleteEvent);
 

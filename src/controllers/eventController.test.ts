@@ -133,7 +133,7 @@ describe('eventController', () => {
         delete: jest.fn().mockResolvedValue({ affected: 1 }),
       });
       await deleteEvent(req, res);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Événement supprimé.' });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Event deleted.' });
     });
 
     it('should return 404 if event not found', async () => {

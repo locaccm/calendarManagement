@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import 'reflect-metadata';
 
-// Chargement des variables d'environnement
+// Loading environment variables
 dotenv.config();
 
 const app = express();
@@ -31,26 +31,26 @@ app.use(
   }),
 );
 
-// Swagger configuration de base
+// Basic Swagger configuration
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Calendar Management API',
       version: '1.0.0',
-      description: "API pour la gestion d'agenda immobilier",
+      description: 'API for real estate calendar management',
     },
     components: {
       schemas: {
         Event: {
           type: 'object',
           properties: {
-            EVEN_ID: { type: 'integer', description: "ID de l'événement (auto-incrémenté)" },
-            EVEC_LIB: { type: 'string', description: "Libellé de l'événement" },
-            EVED_START: { type: 'string', format: 'date', description: 'Date de début' },
-            EVED_END: { type: 'string', format: 'date', description: 'Date de fin' },
-            USEN_ID: { type: 'integer', description: 'ID utilisateur (FK)' },
-            ACCN_ID: { type: 'integer', description: 'ID logement (FK)' },
+            EVEN_ID: { type: 'integer', description: 'Event ID (auto-incremented)' },
+            EVEC_LIB: { type: 'string', description: 'Event label' },
+            EVED_START: { type: 'string', format: 'date', description: 'Start date' },
+            EVED_END: { type: 'string', format: 'date', description: 'End date' },
+            USEN_ID: { type: 'integer', description: 'User ID (FK)' },
+            ACCN_ID: { type: 'integer', description: 'Accommodation ID (FK)' },
           },
           required: ['EVEC_LIB', 'EVED_START', 'EVED_END', 'USEN_ID', 'ACCN_ID'],
         },
@@ -60,23 +60,23 @@ const swaggerOptions = {
   apis: ['./src/routes/*.ts'],
 };
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-// Swagger uniquement en développement
+// Swagger only in development
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
-// Importation des routes événements
+// Import event routes
 import eventRoutes from './routes/eventRoutes';
 
-// Montage des routes événements
+// Mount event routes
 app.use('/', eventRoutes);
 
-// Route health check
+// Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Route racine
+// Root route
 app.get('/', (req, res) => {
   res.send('API Calendar Management');
 });
