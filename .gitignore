@@ -3,37 +3,48 @@ node_modules/
 
 # Environment variables
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
 # Build outputs
 dist/
 build/
-
-# Database files
-*.sqlite
-*.sqlite3
+out/
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Cache files
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Cache and temporary files
 .eslintcache
 .npm
 .DS_Store
-
-# Coverage reports
-coverage/
-.nyc_output/
-tmp/coverage/
-
-# IDE files
+Thumbs.db
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Docker volumes
+data/
+
+# Test files
+test-results/
+
+# Prisma generated files
+prisma/.env
+
+# TypeScript incremental compilation cache
+tsconfig.tsbuildinfo
