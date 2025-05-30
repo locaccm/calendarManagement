@@ -75,6 +75,6 @@ describe('authorizeWithApi middleware', () => {
 
     const res = await request(app).get('/protected').set('Authorization', 'Bearer test-token');
     expect(res.status).toBe(500);
-    expect(res.body.error).toMatch(/Error during verification/);
+    expect(res.body.error).toMatch(/Error during access verification/);
   });
 });
