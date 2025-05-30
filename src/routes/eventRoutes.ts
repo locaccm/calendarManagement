@@ -17,105 +17,10 @@ import {
  * @swagger
  * tags:
  *   name: Events
- *   description: Gestion des événements
- *   x-language: fr
- */
-
-/**
- * @swagger
- * tags:
- *   name: Events
  *   description: Event management
  */
 const router = Router();
 
-/**
- * @swagger
- * /fr/evenements/filtrer:
- *   get:
- *     summary: Filtrer les événements
- *     description: |
- *       Filtrer les événements selon différents critères (utilisateur, logement, période).
- *       Tous les paramètres sont optionnels, mais au moins un devrait être fourni pour obtenir des résultats pertinents.
- *     tags: [Events]
- *     security:
- *       - apiKeyAuth: []
- *     parameters:
- *       - in: query
- *         name: usager
- *         schema:
- *           type: integer
- *         description: ID de l'utilisateur (locataire)
- *         example: 1
- *       - in: query
- *         name: logement
- *         schema:
- *           type: integer
- *         description: ID du logement
- *         example: 2
- *       - in: query
- *         name: dateDebut
- *         schema:
- *           type: string
- *           format: date
- *         description: Date de début (AAAA-MM-JJ)
- *         example: 2025-05-01
- *       - in: query
- *         name: dateFin
- *         schema:
- *           type: string
- *           format: date
- *         description: Date de fin (AAAA-MM-JJ)
- *         example: 2025-05-31
- *     responses:
- *       200:
- *         description: Liste filtrée des événements
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Event'
- *             example: [
- *               {
- *                 "EVEN_ID": 89,
- *                 "EVEC_LIB": "Réunion annuelle",
- *                 "EVED_START": "2025-06-01T09:00:00.000Z",
- *                 "EVED_END": "2025-06-01T11:00:00.000Z",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 1,
- *                 "startDate": "2025-06-01",
- *                 "startTime": "09:00",
- *                 "endDate": "2025-06-01",
- *                 "endTime": "11:00"
- *               },
- *               {
- *                 "EVEN_ID": 90,
- *                 "EVEC_LIB": "Visite appartement",
- *                 "EVED_START": "2025-06-02T14:00:00.000Z",
- *                 "EVED_END": "2025-06-02T15:00:00.000Z",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 1,
- *                 "startDate": "2025-06-02",
- *                 "startTime": "14:00",
- *                 "endDate": "2025-06-02",
- *                 "endTime": "15:00"
- *               }
- *             ]
- *       400:
- *         description: Paramètres de filtre invalides
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
- *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
- */
-router.get('/fr/evenements/filtrer', getFilteredEvents);
-
-// Route pour les tests
 router.get('/events/filter', getFilteredEvents);
 
 /**
@@ -208,11 +113,11 @@ router.get('/en/events/filter', getFilteredEvents);
  * @swagger
  * /fr/evenements:
  *   get:
- *     summary: Liste des événements
+ *     summary: List of events
  *     tags: [Events]
  *     responses:
  *       200:
- *         description: Retourne la liste des événements
+ *         description: Returns the list of events
  */
 
 // Route pour les tests
@@ -241,7 +146,7 @@ router.get('/en/events', getEvents);
  * @swagger
  * /events/{id}:
  *   get:
- *     summary: Récupérer un événement par ID
+ *     summary: Get event by ID
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -251,9 +156,9 @@ router.get('/en/events', getEvents);
  *           type: integer
  *     responses:
  *       200:
- *         description: Détail de l'événement
+ *         description: Event details
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  *     x-language: fr
  */
 
@@ -286,12 +191,12 @@ router.get('/events/:id', getEventById);
  * @swagger
  * /events:
  *   post:
- *     summary: Créer un événement
+ *     summary: Create an event
  *     description: |
- *       Crée un nouvel événement dans le calendrier.
- *       Plusieurs formats de date sont acceptés :
+ *       Creates a new event in the calendar.
+ *       Multiple date formats are accepted:
  *       1. Format ISO 8601 (EVED_START et EVED_END): "2025-05-15T10:00:00Z"
- *       2. Format séparé (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
+ *       2. Separate format (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
  *     tags: [Events]
  *     security:
  *       - apiKeyAuth: []
@@ -306,17 +211,17 @@ router.get('/events/:id', getEventById);
  *               summary: Format ISO 8601
  *               value: {
  *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Visite appartement",
+ *                 "EVEC_LIB": "Apartment visit",
  *                 "EVED_START": "2025-05-15T10:00:00Z",
  *                 "EVED_END": "2025-05-15T11:00:00Z",
  *                 "USEN_ID": 1,
  *                 "ACCN_ID": 2
  *               }
  *             formatSepare:
- *               summary: Format séparé (une journée)
+ *               summary: Separate format (one day)
  *               value: {
  *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Visite appartement",
+ *                 "EVEC_LIB": "Apartment visit",
  *                 "EVED_START": "2025-05-15T10:00:00Z",
  *                 "EVED_END": "2025-05-15T11:00:00Z",
  *                 "startDate": "2025-05-15",
@@ -327,10 +232,10 @@ router.get('/events/:id', getEventById);
  *                 "ACCN_ID": 2
  *               }
  *             formatMultiJours:
- *               summary: Format séparé (plusieurs jours)
+ *               summary: Separate format (multiple days)
  *               value: {
  *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Séminaire immobilier",
+ *                 "EVEC_LIB": "Real estate seminar",
  *                 "EVED_START": "2025-05-15T09:00:00Z",
  *                 "EVED_END": "2025-05-17T18:00:00Z",
  *                 "startDate": "2025-05-15",
@@ -342,7 +247,7 @@ router.get('/events/:id', getEventById);
  *               }
  *     responses:
  *       201:
- *         description: Événement créé avec succès
+ *         description: Event created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -350,20 +255,20 @@ router.get('/events/:id', getEventById);
  *               properties:
  *                 id:
  *                   type: integer
- *                   description: ID de l'événement créé
+ *                   description: Created event ID
  *                 message:
  *                   type: string
  *                   description: Message de confirmation
  *       400:
- *         description: Données invalides ou conflit d'événements
+ *         description: Invalid data or event conflict
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
+ *         description: Unauthorized - Missing or invalid API key
  *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
+ *         description: Access denied - Insufficient rights according to access API
  *     x-language: fr
  */
 
@@ -457,12 +362,12 @@ router.post('/events', createEvent);
  * @swagger
  * /events/{id}:
  *   put:
- *     summary: Mettre à jour un événement
+ *     summary: Update an event
  *     description: |
- *       Met à jour un événement existant dans le calendrier.
- *       Plusieurs formats de date sont acceptés :
+ *       Updates an existing event in the calendar.
+ *       Multiple date formats are accepted:
  *       1. Format ISO 8601 (EVED_START et EVED_END): "2025-05-15T10:00:00Z"
- *       2. Format séparé (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
+ *       2. Separate format (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
  *     tags: [Events]
  *     security:
  *       - apiKeyAuth: []
@@ -472,7 +377,7 @@ router.post('/events', createEvent);
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID de l'événement à mettre à jour
+ *         description: ID of the event to update
  *     requestBody:
  *       required: true
  *       content:
@@ -483,16 +388,16 @@ router.post('/events', createEvent);
  *             formatISO:
  *               summary: Format ISO 8601
  *               value: {
- *                 "EVEC_LIB": "Visite appartement modifiée",
+ *                 "EVEC_LIB": "Modified apartment visit",
  *                 "EVED_START": "2025-05-16T14:00:00Z",
  *                 "EVED_END": "2025-05-16T15:00:00Z",
  *                 "USEN_ID": 1,
  *                 "ACCN_ID": 2
  *               }
  *             formatSepare:
- *               summary: Format séparé (une journée)
+ *               summary: Separate format (one day)
  *               value: {
- *                 "EVEC_LIB": "Visite appartement modifiée",
+ *                 "EVEC_LIB": "Modified apartment visit",
  *                 "EVED_START": "2025-05-16T14:00:00Z",
  *                 "EVED_END": "2025-05-16T15:00:00Z",
  *                 "startDate": "2025-05-16",
@@ -503,9 +408,9 @@ router.post('/events', createEvent);
  *                 "ACCN_ID": 2
  *               }
  *             formatMultiJours:
- *               summary: Format séparé (plusieurs jours)
+ *               summary: Separate format (multiple days)
  *               value: {
- *                 "EVEC_LIB": "Séminaire immobilier modifié",
+ *                 "EVEC_LIB": "Modified real estate seminar",
  *                 "EVED_START": "2025-05-16T09:00:00Z",
  *                 "EVED_END": "2025-05-18T18:00:00Z",
  *                 "startDate": "2025-05-16",
@@ -517,7 +422,7 @@ router.post('/events', createEvent);
  *               }
  *     responses:
  *       200:
- *         description: Événement mis à jour avec succès
+ *         description: Event updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -525,22 +430,22 @@ router.post('/events', createEvent);
  *               properties:
  *                 id:
  *                   type: integer
- *                   description: ID de l'événement mis à jour
+ *                   description: Updated event ID
  *                 message:
  *                   type: string
  *                   description: Message de confirmation
  *       400:
- *         description: Données invalides ou conflit d'événements
+ *         description: Invalid data or event conflict
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
+ *         description: Unauthorized - Missing or invalid API key
  *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
+ *         description: Access denied - Insufficient rights according to access API
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  *     x-language: fr
  */
 
@@ -640,7 +545,7 @@ router.put('/events/:id', updateEvent);
  * @swagger
  * /events/{id}:
  *   delete:
- *     summary: Supprimer un événement
+ *     summary: Delete an event
  *     tags: [Events]
  *     parameters:
  *       - in: path
@@ -650,9 +555,9 @@ router.put('/events/:id', updateEvent);
  *           type: integer
  *     responses:
  *       200:
- *         description: Événement supprimé
+ *         description: Event deleted
  *       404:
- *         description: Événement non trouvé
+ *         description: Event not found
  *     x-language: fr
  */
 
@@ -688,9 +593,9 @@ router.delete('/events/:id', deleteEvent);
  * @swagger
  * /calendar/day:
  *   get:
- *     summary: Récupérer les événements pour un jour spécifique
+ *     summary: Get events for a specific day
  *     description: |
- *       Retourne tous les événements pour une date spécifique.
+ *       Returns all events for a specific date.
  *     tags: [Calendar Views]
  *     security:
  *       - apiKeyAuth: []
@@ -701,23 +606,23 @@ router.delete('/events/:id', deleteEvent);
  *         schema:
  *           type: string
  *           format: date
- *         description: Date pour laquelle récupérer les événements (format YYYY-MM-DD)
+ *         description: Date to retrieve events for (format YYYY-MM-DD)
  *         example: 2025-05-15
  *       - in: query
  *         name: usager
  *         schema:
  *           type: integer
- *         description: ID de l'usager (locataire) pour filtrer les événements
+ *         description: User ID (tenant) to filter events
  *         example: 1
  *       - in: query
  *         name: logement
  *         schema:
  *           type: integer
- *         description: ID du logement pour filtrer les événements
+ *         description: Accommodation ID to filter events
  *         example: 2
  *     responses:
  *       200:
- *         description: Informations du jour et liste des événements pour le jour spécifié
+ *         description: Day information and list of events for the specified day
  *         content:
  *           application/json:
  *             schema:
@@ -726,7 +631,7 @@ router.delete('/events/:id', deleteEvent);
  *                 date:
  *                   type: string
  *                   format: date
- *                   description: Date du jour demandé
+ *                   description: Requested day date
  *                   example: "2025-05-15"
  *                 events:
  *                   type: array
@@ -737,7 +642,7 @@ router.delete('/events/:id', deleteEvent);
  *               "events": [
  *                 {
  *                   "EVEN_ID": 89,
- *                   "EVEC_LIB": "Réunion annuelle",
+ *                   "EVEC_LIB": "Annual meeting",
  *                   "EVED_START": "2025-06-01T09:00:00.000Z",
  *                   "EVED_END": "2025-06-01T11:00:00.000Z",
  *                   "USEN_ID": 1,
@@ -762,11 +667,11 @@ router.delete('/events/:id', deleteEvent);
  *               ]
  *             }
  *       400:
- *         description: Paramètres invalides
+ *         description: Invalid parameters
  *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
+ *         description: Unauthorized - Missing or invalid API key
  *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
+ *         description: Access denied - Insufficient rights according to access API
  */
 router.get('/calendar/day', getEventsForDay);
 
@@ -774,10 +679,10 @@ router.get('/calendar/day', getEventsForDay);
  * @swagger
  * /calendar/week:
  *   get:
- *     summary: Récupérer les événements pour une semaine spécifique
+ *     summary: Get events for a specific week
  *     description: |
- *       Retourne tous les événements pour une semaine spécifique.
- *       Vous pouvez spécifier soit une date dans la semaine, soit directement le numéro de semaine et l'année.
+ *       Returns all events for a specific week.
+ *       You can specify either a date within the week or directly the week number and year.
  *     tags: [Calendar Views]
  *     security:
  *       - apiKeyAuth: []
@@ -787,35 +692,35 @@ router.get('/calendar/day', getEventsForDay);
  *         schema:
  *           type: string
  *           format: date
- *         description: Date dans la semaine pour laquelle récupérer les événements (format YYYY-MM-DD)
+ *         description: Date within the week to retrieve events for (format YYYY-MM-DD)
  *         example: 2025-05-15
  *       - in: query
  *         name: week
  *         schema:
  *           type: integer
- *         description: Numéro de la semaine (1-53)
+ *         description: Week number (1-53)
  *         example: 20
  *       - in: query
  *         name: year
  *         schema:
  *           type: integer
- *         description: Année
+ *         description: Year
  *         example: 2025
  *       - in: query
  *         name: usager
  *         schema:
  *           type: integer
- *         description: ID de l'usager (locataire) pour filtrer les événements
+ *         description: User ID (tenant) to filter events
  *         example: 1
  *       - in: query
  *         name: logement
  *         schema:
  *           type: integer
- *         description: ID du logement pour filtrer les événements
+ *         description: Accommodation ID to filter events
  *         example: 2
  *     responses:
  *       200:
- *         description: Informations de la semaine et liste des événements
+ *         description: Week information and list of events
  *         content:
  *           application/json:
  *             schema:
@@ -823,11 +728,11 @@ router.get('/calendar/day', getEventsForDay);
  *               properties:
  *                 week:
  *                   type: integer
- *                   description: Numéro de la semaine (1-53)
+ *                   description: Week number (1-53)
  *                   example: 20
  *                 year:
  *                   type: integer
- *                   description: Année
+ *                   description: Year
  *                   example: 2025
  *                 startDate:
  *                   type: string
@@ -859,7 +764,7 @@ router.get('/calendar/day', getEventsForDay);
  *               "events": [
  *                 {
  *                   "EVEN_ID": 89,
- *                   "EVEC_LIB": "Réunion annuelle",
+ *                   "EVEC_LIB": "Annual meeting",
  *                   "EVED_START": "2025-06-01T09:00:00.000Z",
  *                   "EVED_END": "2025-06-01T11:00:00.000Z",
  *                   "USEN_ID": 1,
@@ -871,7 +776,7 @@ router.get('/calendar/day', getEventsForDay);
  *                 },
  *                 {
  *                   "EVEN_ID": 90,
- *                   "EVEC_LIB": "Visite appartement",
+ *                   "EVEC_LIB": "Apartment visit",
  *                   "EVED_START": "2025-06-02T14:00:00.000Z",
  *                   "EVED_END": "2025-06-02T15:00:00.000Z",
  *                   "USEN_ID": 1,
@@ -884,11 +789,11 @@ router.get('/calendar/day', getEventsForDay);
  *               ]
  *             }
  *       400:
- *         description: Paramètres invalides
+ *         description: Invalid parameters
  *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
+ *         description: Unauthorized - Missing or invalid API key
  *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
+ *         description: Access denied - Insufficient rights according to access API
  */
 router.get('/calendar/week', getEventsForWeek);
 
@@ -896,10 +801,10 @@ router.get('/calendar/week', getEventsForWeek);
  * @swagger
  * /calendar/month:
  *   get:
- *     summary: Récupérer les événements pour un mois spécifique
+ *     summary: Get events for a specific month
  *     description: |
- *       Retourne tous les événements pour un mois spécifique.
- *       Vous pouvez spécifier soit une date dans le mois, soit directement le mois et l'année.
+ *       Returns all events for a specific month.
+ *       You can specify either a date within the month or directly the month and year.
  *     tags: [Calendar Views]
  *     security:
  *       - apiKeyAuth: []
@@ -909,35 +814,35 @@ router.get('/calendar/week', getEventsForWeek);
  *         schema:
  *           type: string
  *           format: date
- *         description: Date dans le mois pour lequel récupérer les événements (format YYYY-MM-DD)
+ *         description: Date in the month to retrieve events for (format YYYY-MM-DD)
  *         example: 2025-05-15
  *       - in: query
  *         name: month
  *         schema:
  *           type: integer
- *         description: Mois (1-12)
+ *         description: Month (1-12)
  *         example: 5
  *       - in: query
  *         name: year
  *         schema:
  *           type: integer
- *         description: Année
+ *         description: Year
  *         example: 2025
  *       - in: query
  *         name: usager
  *         schema:
  *           type: integer
- *         description: ID de l'usager (locataire) pour filtrer les événements
+ *         description: User ID (tenant) to filter events
  *         example: 1
  *       - in: query
  *         name: logement
  *         schema:
  *           type: integer
- *         description: ID du logement pour filtrer les événements
+ *         description: Accommodation ID to filter events
  *         example: 2
  *     responses:
  *       200:
- *         description: Informations du mois et liste des événements
+ *         description: Month information and list of events
  *         content:
  *           application/json:
  *             schema:
@@ -945,29 +850,29 @@ router.get('/calendar/week', getEventsForWeek);
  *               properties:
  *                 month:
  *                   type: integer
- *                   description: Mois (1-12)
+ *                   description: Month (1-12)
  *                   example: 5
  *                 year:
  *                   type: integer
- *                   description: Année
+ *                   description: Year
  *                   example: 2025
  *                 startDate:
  *                   type: string
  *                   format: date
- *                   description: Premier jour du mois
+ *                   description: First day of the month
  *                   example: "2025-05-01"
  *                 endDate:
  *                   type: string
  *                   format: date
- *                   description: Dernier jour du mois
+ *                   description: Last day of the month
  *                   example: "2025-05-31"
  *                 daysInMonth:
  *                   type: integer
- *                   description: Nombre de jours dans le mois
+ *                   description: Number of days in the month
  *                   example: 31
  *                 days:
  *                   type: array
- *                   description: Liste des jours du mois
+ *                   description: List of days in the month
  *                   items:
  *                     type: string
  *                     format: date
@@ -986,7 +891,7 @@ router.get('/calendar/week', getEventsForWeek);
  *               "events": [
  *                 {
  *                   "EVEN_ID": 89,
- *                   "EVEC_LIB": "Réunion annuelle",
+ *                   "EVEC_LIB": "Annual meeting",
  *                   "EVED_START": "2025-06-01T09:00:00.000Z",
  *                   "EVED_END": "2025-06-01T11:00:00.000Z",
  *                   "USEN_ID": 1,
@@ -998,7 +903,7 @@ router.get('/calendar/week', getEventsForWeek);
  *                 },
  *                 {
  *                   "EVEN_ID": 92,
- *                   "EVEC_LIB": "Signature du bail",
+ *                   "EVEC_LIB": "Lease signing",
  *                   "EVED_START": "2025-06-15T14:00:00.000Z",
  *                   "EVED_END": "2025-06-15T15:00:00.000Z",
  *                   "USEN_ID": 1,
@@ -1011,11 +916,11 @@ router.get('/calendar/week', getEventsForWeek);
  *               ]
  *             }
  *       400:
- *         description: Paramètres invalides
+ *         description: Invalid parameters
  *       401:
- *         description: Non autorisé - Clé d'API manquante ou invalide
+ *         description: Unauthorized - Missing or invalid API key
  *       403:
- *         description: Accès refusé - Droits insuffisants selon l'API d'accès
+ *         description: Access denied - Insufficient rights according to access API
  */
 router.get('/calendar/month', getEventsForMonth);
 

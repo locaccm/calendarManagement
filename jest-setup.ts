@@ -1,10 +1,10 @@
 // Configuration globale pour Jest
 import { PrismaClient } from '@prisma/client';
 
-// Créer une instance globale de PrismaClient pour les tests
+// Create a global PrismaClient instance for tests
 const prisma = new PrismaClient();
 
-// Augmenter le timeout pour les tests d'intégration
+// Increase timeout for integration tests
 jest.setTimeout(60000);
 
 // Exporter l'instance de PrismaClient

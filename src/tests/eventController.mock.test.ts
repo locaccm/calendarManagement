@@ -9,10 +9,10 @@ jest.mock('../prisma', () => ({
   default: mockDeep<PrismaClient>(),
 }));
 
-// Importer le mock après la définition du mock
+// Import mock after mock definition
 import prismaMock from '../prisma';
 
-// Importer les contrôleurs après avoir configuré les mocks
+// Import controllers after configuring mocks
 import {
   getEvents,
   getEventById,
@@ -22,7 +22,7 @@ import {
   getFilteredEvents,
 } from '../controllers/eventController';
 
-// Typer correctement le mock pour éviter les erreurs TypeScript
+// Properly type the mock to avoid TypeScript errors
 const typedPrismaMock = prismaMock as unknown as DeepMockProxy<PrismaClient>;
 
 describe('Event Controller', () => {
@@ -124,7 +124,7 @@ describe('Event Controller', () => {
       // Mock pour hasEventConflict (pas de conflit)
       typedPrismaMock.event.findFirst.mockResolvedValue(null);
 
-      // Mock pour la création d'événement
+      // Mock for event creation
       typedPrismaMock.event.create.mockResolvedValue(mockEvent);
 
       // Act
@@ -157,7 +157,7 @@ describe('Event Controller', () => {
         ACCN_ID: 2,
       };
 
-      // Même en cas de conflit, l'événement doit être créé car les conflits sont autorisés
+      // Even with a conflict, the event should be created as conflicts are allowed
       typedPrismaMock.event.findFirst.mockResolvedValue({
         EVEN_ID: 2,
         EVEC_LIB: 'Existing Event',
@@ -198,7 +198,7 @@ describe('Event Controller', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Événement non trouvé.',
+        error: 'Event not found.',
       });
     });
 
@@ -274,7 +274,7 @@ describe('Event Controller', () => {
         ACCN_ID: 2,
       };
 
-      // Même en cas de conflit, l'événement doit être mis à jour car les conflits sont autorisés
+      // Even with a conflict, the event should be updated as conflicts are allowed
       typedPrismaMock.event.findUnique.mockResolvedValue(existingEvent);
       typedPrismaMock.event.findFirst.mockResolvedValue({
         EVEN_ID: 2,
@@ -332,7 +332,7 @@ describe('Event Controller', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Événement non trouvé.',
+        error: 'Event not found.',
       });
     });
   });

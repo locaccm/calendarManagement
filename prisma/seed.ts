@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Création d'un usager de test
+  // Create a test user
   const user = await prisma.user.upsert({
     where: { USEN_ID: 1 },
     update: {},
@@ -11,31 +11,31 @@ async function main() {
       USEC_URLPP: 'https://example.com/photo.jpg',
       USEC_LNAME: 'Testeur',
       // Ajoute les autres champs obligatoires si besoin
-      // Exemples à compléter selon ton schéma :
+      // Examples to complete according to your schema:
       // USEC_FNAME: 'Jean',
       // USEC_EMAIL: 'testeur@example.com',
       // USEC_PASSWORD: 'hashedpassword',
     },
   });
 
-  // Création d'un logement de test
+  // Create a test accommodation
   const accommodation = await prisma.accommodation.upsert({
     where: { ACCN_ID: 1 },
     update: {},
     create: {
       ACCN_ID: 1,
-      ACCC_NAME: 'Appartement témoin',
+      ACCC_NAME: 'Model apartment',
       // Ajoute les autres champs obligatoires si besoin
-      // Exemples à compléter selon ton schéma :
+      // Examples to complete according to your schema:
       // ACCC_ADDRESS: '123 rue de Paris',
       // ACCC_CITY: 'Paris',
     },
   });
 
-  // Création d'un événement de test
+  // Create a test event
   await prisma.event.create({
     data: {
-      EVEC_LIB: 'Réunion annuelle',
+      EVEC_LIB: 'Annual meeting',
       EVED_START: new Date('2025-06-01T09:00:00Z'),
       EVED_END: new Date('2025-06-01T11:00:00Z'),
       USEN_ID: user.USEN_ID,
@@ -43,7 +43,7 @@ async function main() {
       // Ajoute les autres champs obligatoires si besoin
     },
   });
-  console.log('Seed terminé : usager, logement, événement créés');
+  console.log('Seed completed: user, accommodation, event created');
 }
 
 main()

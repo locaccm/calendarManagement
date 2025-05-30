@@ -1,7 +1,7 @@
 import { sanitizeEvent } from '../controllers/eventController';
 
 describe('sanitizeEvent', () => {
-  it('retourne les bons champs date/heure pour même jour', () => {
+  it('returns correct date/time fields for same day', () => {
     const input = {
       EVEN_ID: 1,
       EVEC_LIB: 'Test',
@@ -32,7 +32,7 @@ describe('sanitizeEvent', () => {
     expect(res.EVED_START).not.toBe(res.EVED_END);
   });
 
-  it('gère les valeurs null ou invalides', () => {
+  it('handles null or invalid values', () => {
     const input = {
       EVEN_ID: 3,
       EVEC_LIB: 'Test null',
@@ -42,7 +42,7 @@ describe('sanitizeEvent', () => {
       ACCN_ID: 3,
     };
     const res = sanitizeEvent(input);
-    // Les valeurs null sont converties en chaînes vides
+    // Null values are converted to empty strings
     expect(res.EVED_START).toBe('');
     expect(res.EVED_END).toBe('');
   });

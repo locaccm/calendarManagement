@@ -14,7 +14,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
 
 // Configuration du conteneur PostgreSQL pour les tests
 async function setupTestDatabase() {
-  // Démarrer un conteneur PostgreSQL pour les tests
+  // Start a PostgreSQL container for tests
   container = await new GenericContainer('postgres:14')
     .withEnvironment({
       POSTGRES_DB: 'calendar_test_db',
@@ -29,13 +29,13 @@ async function setupTestDatabase() {
   const port = container.getMappedPort(5432);
   process.env.DATABASE_URL = `postgresql://postgres:postgres@${host}:${port}/calendar_test_db?schema=public`;
 
-  // Créer une nouvelle instance de PrismaClient
+  // Create a new PrismaClient instance
   prisma = new PrismaClient();
 
-  // Exécuter les migrations Prisma
+  // Run Prisma migrations
   try {
     await execPromise('npx prisma migrate deploy');
-    console.log('Migrations appliquées avec succès');
+    console.log('Migrations applied successfully');
   } catch (error) {
     console.error("Erreur lors de l'application des migrations:", error);
   }
@@ -43,28 +43,28 @@ async function setupTestDatabase() {
   return prisma;
 }
 
-// Fonction pour réinitialiser la base de données de test avant chaque suite de tests
+// Function to reset the test database before each test suite
 export async function resetDatabase() {
   try {
-    // Supprimer toutes les données existantes
+    // Delete all existing data
     await prisma.event.deleteMany({});
-    console.log('Base de données de test réinitialisée avec succès');
+    console.log('Test database reset successfully');
   } catch (error) {
-    console.error('Erreur lors de la réinitialisation de la base de données de test:', error);
+    console.error('Error while resetting test database:', error);
     throw error;
   }
 }
 
-// Fonction pour fermer la connexion à la base de données après les tests
+// Function to close the database connection after tests
 export async function closeDatabase() {
   await prisma.$disconnect();
   if (container) {
     await container.stop();
-    console.log('Conteneur de test arrêté');
+    console.log('Test container stopped');
   }
 }
 
-// Initialisation de la base de données de test
+// Test database initialization
 export async function initTestDatabase() {
   if (!prisma) {
     await setupTestDatabase();

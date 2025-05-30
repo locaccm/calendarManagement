@@ -1,6 +1,6 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 module.exports = {
-  // Spécifier un répertoire temporaire pour les rapports de couverture
+  // Specify a temporary directory for coverage reports
   coverageDirectory: './tmp/coverage',
   coveragePathIgnorePatterns: [
     '/node_modules/',
@@ -12,7 +12,7 @@ module.exports = {
   transform: {
     "^.+\\.tsx?$": ["ts-jest", {}],
   },
-  // Exécuter tous les tests sans exception
+  // Run all tests without exception
   testPathIgnorePatterns: [
     "/node_modules/"
   ],

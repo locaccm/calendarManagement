@@ -5,7 +5,7 @@ const path = require('path');
 const testFilePath = path.join(__dirname, 'src/tests/calendarViewController.mock.test.ts');
 let content = fs.readFileSync(testFilePath, 'utf8');
 
-// Mettre à jour le test getEventsForDay
+// Update getEventsForDay test
 content = content.replace(
   /expect\(mockResponse\.json\)\.toHaveBeenCalledWith\(\s+mockEvents\.map\(\(e\) =>\s+expect\.objectContaining\(\{\s+\.\.\.e,\s+EVED_START: e\.EVED_START instanceof Date \? e\.EVED_START\.toISOString\(\) : e\.EVED_START,\s+EVED_END: e\.EVED_END instanceof Date \? e\.EVED_END\.toISOString\(\) : e\.EVED_END,\s+\}\),\s+\),/g,
   `expect(mockResponse.json).toHaveBeenCalledWith(
@@ -23,7 +23,7 @@ content = content.replace(
         }),`
 );
 
-// Mettre à jour le test getEventsForWeek
+// Update getEventsForWeek test
 content = content.replace(
   /expect\(mockResponse\.json\)\.toHaveBeenCalledWith\(\s+expect\.objectContaining\(\{\s+week: expect\.any\(Number\),\s+year: expect\.any\(Number\),\s+events: expect\.any\(Array\),\s+\}\),\s+\);/g,
   `expect(mockResponse.json).toHaveBeenCalledWith(
@@ -38,7 +38,7 @@ content = content.replace(
       );`
 );
 
-// Mettre à jour le test getEventsForMonth
+// Update getEventsForMonth test
 content = content.replace(
   /expect\(mockResponse\.json\)\.toHaveBeenCalledWith\(\s+expect\.objectContaining\(\{\s+month: expect\.any\(Number\),\s+year: expect\.any\(Number\),\s+events: expect\.any\(Array\),\s+\}\),\s+\);/g,
   `expect(mockResponse.json).toHaveBeenCalledWith(
@@ -54,7 +54,7 @@ content = content.replace(
       );`
 );
 
-// Écrire le fichier mis à jour
+// Write the updated file
 fs.writeFileSync(testFilePath, content, 'utf8');
 
-console.log('Tests mis à jour avec succès !');
+console.log('Tests updated successfully!');

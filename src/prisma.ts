@@ -17,7 +17,7 @@ switch (env) {
     dotenv.config();
 }
 
-// Configuration du client Prisma avec logging en développement uniquement
+// Configure Prisma client with logging in development only
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });

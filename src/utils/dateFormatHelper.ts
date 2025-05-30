@@ -1,12 +1,12 @@
 import { Request } from 'express';
 
 /**
- * Fonction d'aide pour normaliser les différents formats de date dans les requêtes
+ * Helper function to normalize different date formats in requests
  * Prend en charge les formats suivants :
  * - EVED_START/EVED_END (format ISO)
- * - DATE_START/START_TIME/DATE_END/END_TIME (format séparé)
- * - date/startTime/endTime (format utilisé dans certains tests, événement d'une journée)
- * - dateStart/startTime/dateEnd/endTime (format étendu pour événements sur plusieurs jours)
+ * - DATE_START/START_TIME/DATE_END/END_TIME (split format)
+ * - date/startTime/endTime (format used in some tests, single day event)
+ * - dateStart/startTime/dateEnd/endTime (extended format for multi-day events)
  */
 export function normalizeRequestDates(req: Request): {
   EVED_START: string | undefined;
@@ -15,7 +15,7 @@ export function normalizeRequestDates(req: Request): {
   let EVED_START = req.body.EVED_START;
   let EVED_END = req.body.EVED_END;
 
-  // Support pour le format étendu avec dateStart/dateEnd pour les événements sur plusieurs jours
+  // Support for extended format with dateStart/dateEnd for multi-day events
   if (req.body.dateStart && req.body.startTime) {
     EVED_START = new Date(`${req.body.dateStart}T${req.body.startTime}:00Z`).toISOString();
     req.body.DATE_START = req.body.dateStart;
@@ -27,7 +27,7 @@ export function normalizeRequestDates(req: Request): {
     req.body.END_TIME = req.body.endTime;
   }
 
-  // Support pour le format original (date, startTime, endTime) - événement d'une journée
+  // Support for original format (date, startTime, endTime) - single day event
   // Si dateStart/dateEnd ne sont pas fournis mais date l'est
   if (!req.body.dateStart && req.body.date && req.body.startTime) {
     EVED_START = new Date(`${req.body.date}T${req.body.startTime}:00Z`).toISOString();

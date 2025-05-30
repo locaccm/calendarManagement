@@ -51,7 +51,7 @@ content = content.replace(
           events: expect.arrayContaining(`
 );
 
-// Écrire le fichier mis à jour
+// Write the updated file
 fs.writeFileSync(testFilePath, content, 'utf8');
 
-console.log('Tests des vues du calendrier mis à jour avec succès !');
+console.log('Calendar view tests updated successfully!');

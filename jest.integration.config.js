@@ -12,5 +12,5 @@ module.exports = {
   collectCoverage: true,
   coverageDirectory: 'coverage/integration',
   coverageReporters: ['text', 'lcov'],
-  testTimeout: 30000, // Augmenter le timeout pour les tests d'intégration
+  testTimeout: 30000, // Increase timeout for integration tests
 };

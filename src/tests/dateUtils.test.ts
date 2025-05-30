@@ -22,7 +22,7 @@ describe('Date Utils', () => {
       // Assert
       expect(result).toBeInstanceOf(Date);
       expect(result.getUTCFullYear()).toBe(year);
-      expect(result.getUTCMonth()).toBe(month - 1); // Les mois en JS sont 0-indexés
+      expect(result.getUTCMonth()).toBe(month - 1); // Months in JS are 0-indexed
       expect(result.getUTCDate()).toBe(day);
       expect(result.getUTCHours()).toBe(hour);
       expect(result.getUTCMinutes()).toBe(minute);
@@ -55,7 +55,7 @@ describe('Date Utils', () => {
 
       // Assert
       expect(decemberDate.getUTCFullYear()).toBe(2025);
-      expect(decemberDate.getUTCMonth()).toBe(11); // Décembre est 11 en JS
+      expect(decemberDate.getUTCMonth()).toBe(11); // December is 11 in JS
       expect(decemberDate.getUTCDate()).toBe(31);
     });
   });
@@ -131,7 +131,7 @@ describe('Date Utils', () => {
         ACCN_ID: 1,
       };
 
-      // Act - Forcer l'enrichissement même en environnement de test
+      // Act - Force enrichment even in test environment
       const result = enrichEventWithDateTimeParts(event, true);
 
       // Assert
@@ -185,7 +185,7 @@ describe('Date Utils', () => {
       // Act - Sans forcer l'enrichissement
       const resultWithoutForce = enrichEventWithDateTimeParts(event);
 
-      // Act - En forçant l'enrichissement
+      // Act - By forcing enrichment
       const resultWithForce = enrichEventWithDateTimeParts(event, true);
 
       // Restore
@@ -200,7 +200,7 @@ describe('Date Utils', () => {
         startTime: '10:30',
         endDate: '2025-05-15',
         endTime: '12:00',
-      }); // Enrichissement forcé
+      }); // Forced enrichment
     });
   });
 });

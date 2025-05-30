@@ -23,7 +23,7 @@ app.use(
   }),
 );
 
-// Configuration de la sécurité
+// Security configuration
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -39,7 +39,7 @@ app.use(
   }),
 );
 
-// Configuration Swagger simplifiée
+// Simplified Swagger configuration
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -63,7 +63,7 @@ const swaggerOptions = {
   apis: ['./src/routes/*.ts'],
 };
 
-// Génération de la documentation Swagger
+// Generate Swagger documentation
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Options UI pour Swagger
@@ -80,7 +80,7 @@ const swaggerUiOptions = {
 // Montage de la documentation Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
-// Middleware pour rediriger vers la documentation en français
+// Middleware to redirect to API documentation
 app.use('/api-docs-fr', (req, res) => {
   res.redirect('/api-docs');
 });
@@ -168,10 +168,10 @@ app.get('/', (req, res) => {
           <div class="header">
             <div class="logo">🗓️</div>
             <h1>${process.env.API_TITLE || 'API de Gestion de Calendrier'}</h1>
-            <p>Bienvenue sur l'API de gestion de calendrier. Cette API permet de gérer des événements, des réservations et des disponibilités pour des logements.</p>
+            <p>Welcome to the Calendar Management API. This API allows you to manage events, reservations, and availability for accommodations.</p>
           </div>
           <div>
-            <a href="/api-docs" class="btn">Accéder à la Documentation API</a>
+            <a href="/api-docs" class="btn">Access API Documentation</a>
           </div>
           <div class="info">
             <p>Version: ${process.env.API_VERSION || '1.0.0'}</p>
@@ -182,7 +182,7 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Montage des routes événements
+// Mount event routes
 app.use('/', eventRoutes);
 
 // Route health check

@@ -2,7 +2,7 @@ import { EventDateRange } from '../types/prisma';
 
 /**
  * Convertit une date en UTC
- * @param dateInput - Date ou chaîne de caractères représentant une date
+ * @param dateInput - Date or string representing a date
  * @returns Date en UTC
  */
 export function toUTCDate(dateInput: string | Date): Date {
@@ -11,8 +11,8 @@ export function toUTCDate(dateInput: string | Date): Date {
 }
 
 /**
- * Crée une date UTC à partir de composants
- * @param year - Année
+ * Creates a UTC date from components
+ * @param year - Year
  * @param month - Mois (1-12)
  * @param day - Jour
  * @param hour - Heure (0-23)
@@ -32,30 +32,30 @@ export function createUTCDateFromParts(
 }
 
 /**
- * Obtient le début de journée en UTC
- * @param year - Année
+ * Gets the start of day in UTC
+ * @param year - Year
  * @param month - Mois (1-12)
  * @param day - Jour
- * @returns Date de début de journée en UTC
+ * @returns Start of day date in UTC
  */
 export function getUTCStartOfDay(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
 }
 
 /**
- * Obtient la fin de journée en UTC
- * @param year - Année
+ * Gets the end of day in UTC
+ * @param year - Year
  * @param month - Mois (1-12)
  * @param day - Jour
- * @returns Date de fin de journée en UTC
+ * @returns End of day date in UTC
  */
 export function getUTCEndOfDay(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month - 1, day, 23, 59, 59));
 }
 
 /**
- * Vérifie si une chaîne de caractères représente une date UTC valide
- * @param dateString - Chaîne de caractères à vérifier
+ * Checks if a string represents a valid UTC date
+ * @param dateString - String to check
  * @returns true si la date est valide, false sinon
  */
 export function isValidUTCDate(dateString: string): boolean {
@@ -65,7 +65,7 @@ export function isValidUTCDate(dateString: string): boolean {
 
 /**
  * Extrait la partie date (YYYY-MM-DD) d'une date
- * @param date - Date à décomposer
+ * @param date - Date to decompose
  * @returns Partie date au format YYYY-MM-DD
  */
 export function extractDatePart(date: Date): string {
@@ -74,7 +74,7 @@ export function extractDatePart(date: Date): string {
 
 /**
  * Extrait la partie heure (HH:MM) d'une date
- * @param date - Date à décomposer
+ * @param date - Date to decompose
  * @returns Partie heure au format HH:MM
  */
 export function extractTimePart(date: Date): string {
@@ -82,18 +82,18 @@ export function extractTimePart(date: Date): string {
 }
 
 /**
- * Enrichit un événement avec des parties date/heure séparées
- * @param event - Événement à enrichir
- * @param forceEnrich - Force l'enrichissement même en environnement de test
- * @returns Événement enrichi avec startDate, startTime, endDate, endTime
+ * Enriches an event with separate date/time parts
+ * @param event - Event to enrich
+ * @param forceEnrich - Force enrichment even in test environment
+ * @returns Event enriched with startDate, startTime, endDate, endTime
  */
 export function enrichEventWithDateTimeParts(event: any, forceEnrich: boolean = false): any {
   if (!event) return event;
 
-  // Vérifier si nous sommes en environnement de test
+  // Check if we are in test environment
   const isTestEnvironment = process.env.NODE_ENV === 'test';
 
-  // Ne pas enrichir en environnement de test sauf si forcé
+  // Do not enrich in test environment unless forced
   if (isTestEnvironment && !forceEnrich) {
     return event;
   }

@@ -1,8 +1,8 @@
 import { Event } from './Event';
 
 /**
- * Interface étendue pour les événements, incluant les propriétés supplémentaires
- * attendues par certains tests d'intégration
+ * Extended interface for events, including additional properties
+ * expected by some integration tests
  */
 export interface EventExtended extends Event {
   DATE_START?: string;

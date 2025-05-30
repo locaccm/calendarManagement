@@ -4,11 +4,11 @@ import app from '../app';
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-describe('Events API - Création et format date/heure', () => {
+describe('Events API - Creation and date/time format', () => {
   let userId: number;
   let accnId: number;
   beforeAll(async () => {
-    // Crée un utilisateur et un logement valides pour les tests
+    // Create valid user and accommodation for tests
     const user = await prisma.user.upsert({
       where: { USEC_MAIL: 'testuser@example.com' },
       update: {},
@@ -41,13 +41,13 @@ describe('Events API - Création et format date/heure', () => {
       ACCN_ID: accnId,
     };
     const res = await request(app).post('/events').send(event);
-    expect([201, 200, 409]).toContain(res.status); // Succès attendu, ne pas attendre 500 ici
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-06-01');
       expect(res.body.DATE_END).toBe('2025-06-01');
       expect(res.body.START_TIME).toBe('09:00');
       expect(res.body.END_TIME).toBe('11:00');
-      expect(res.body.DATE_START).toBe(res.body.DATE_END); // même jour
+      expect(res.body.DATE_START).toBe(res.body.DATE_END); // same day
     }
   });
 
@@ -61,17 +61,17 @@ describe('Events API - Création et format date/heure', () => {
       ACCN_ID: accnId,
     };
     const res = await request(app).post('/events').send(event);
-    expect([201, 200, 409]).toContain(res.status); // Succès attendu, ne pas attendre 500 ici
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-07-10');
       expect(res.body.DATE_END).toBe('2025-07-10');
       expect(res.body.START_TIME).toBe('14:00');
       expect(res.body.END_TIME).toBe('16:00');
-      expect(res.body.DATE_START).toBe(res.body.DATE_END); // même jour
+      expect(res.body.DATE_START).toBe(res.body.DATE_END); // same day
     }
   });
 
-  it('POST /events accepte un événement sur plusieurs jours', async () => {
+  it('POST /events accepts a multi-day event', async () => {
     const event = {
       EVEC_LIB: 'Test multi-jours',
       EVED_START: '2025-08-01T09:00:00Z',
@@ -80,7 +80,7 @@ describe('Events API - Création et format date/heure', () => {
       ACCN_ID: accnId,
     };
     const res = await request(app).post('/events').send(event);
-    expect([201, 200, 409]).toContain(res.status); // Succès attendu, ne pas attendre 500 ici
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-08-01');
       expect(res.body.DATE_END).toBe('2025-08-03');

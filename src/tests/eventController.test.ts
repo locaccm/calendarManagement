@@ -25,7 +25,7 @@ describe('Events API validation & error handling', () => {
 
   it('GET /events/99999999 (not found) should return 404', async () => {
     const res = await request(app).get('/events/99999999');
-    expect([404, 500]).toContain(res.status); // 404 attendu, 500 si DB non mockée
+    expect([404, 500]).toContain(res.status); // 404 expected, 500 if DB not mocked
   });
 
   it('DELETE /events/99999999 (not found) should return 404', async () => {
@@ -39,11 +39,11 @@ describe('Events API validation & error handling', () => {
     expect(res.body.error).toBe('Validation error');
   });
 
-  it('POST /events with conflit (maintenant autorisé)', async () => {
-    // Ce test vérifie que les conflits sont maintenant autorisés
-    // Nous pouvons créer plusieurs événements sur le même créneau et logement/usager
+  it('POST /events with conflict (now allowed)', async () => {
+    // This test verifies that conflicts are now allowed
+    // We can create multiple events in the same time slot and accommodation/user
     const event = {
-      EVEC_LIB: 'Réunion annuelle',
+      EVEC_LIB: 'Annual meeting',
       EVED_START: '2025-06-01T09:00:00Z',
       EVED_END: '2025-06-01T11:00:00Z',
       USEN_ID: 1,
@@ -51,6 +51,6 @@ describe('Events API validation & error handling', () => {
     };
     await request(app).post('/events').send(event);
     const res = await request(app).post('/events').send(event);
-    expect([201, 200, 409, 500]).toContain(res.status); // 201/200 attendu car les conflits sont autorisés, 409/500 si DB non mockée
+    expect([201, 200, 409, 500]).toContain(res.status); // 201/200 expected as conflicts are allowed, 409/500 if DB not mocked
   });
 });

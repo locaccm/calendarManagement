@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-// Types de rôles possibles
+// Possible role types
 export type UserRole = 'Owner' | 'Tenant';
 
 // Interface utilisateur typique (adapter selon ton projet)
@@ -9,30 +9,30 @@ export interface AuthUser {
   role: UserRole;
 }
 
-// Middleware d'autorisation générique
+// Generic authorization middleware
 export function authorize(roles: UserRole[] = [], ownOnly = false) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as AuthUser | undefined;
     if (!user) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: 'Not authenticated' });
     }
     if (roles.length && !roles.includes(user.role)) {
-      return res.status(403).json({ error: 'Accès refusé (rôle)' });
+      return res.status(403).json({ error: 'Access denied (role)' });
     }
-    // Si ownOnly, on vérifie que l'utilisateur est bien le créateur de la ressource
+    // If ownOnly, verify that the user is the creator of the resource
     if (ownOnly && req.event && req.event.USEN_ID !== user.id) {
-      return res.status(403).json({ error: 'Accès refusé (propriétaire)' });
+      return res.status(403).json({ error: 'Access denied (owner)' });
     }
     next();
   };
 }
 
-// Pour que req.user soit typé partout (à placer dans un fichier de types globaux si besoin)
+// To type req.user everywhere (to be placed in a global types file if needed)
 declare global {
   namespace Express {
     interface Request {
       user?: AuthUser;
-      event?: any; // Pour les vérifications ownOnly, à enrichir selon ton modèle
+      event?: any; // For ownOnly checks, to be enriched according to your model
     }
   }
 }

@@ -35,7 +35,7 @@ export function sanitizeEvent(prismaEvent: any): Event {
       EVED_END: dEnd.toISOString(),
     };
   }
-  // S'assurer que les champs EVED_START et EVED_END sont toujours des chaînes
+  // Ensure that EVED_START and EVED_END fields are always strings
   const { EVED_START, EVED_END } = formatDateFields(prismaEvent.EVED_START, prismaEvent.EVED_END);
   const baseEvent = {
     EVEN_ID: prismaEvent.EVEN_ID!,
@@ -85,7 +85,7 @@ export const getEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany();
     res.status(200).json(sanitizeEvents(events));
   } catch (error) {
-    handleError(res, 'Erreur lors de la récupération des événements.');
+    handleError(res, 'Error while retrieving events.');
   }
 };
 
@@ -98,7 +98,7 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
     const dateStart = req.query.dateStart;
     const dateEnd = req.query.dateEnd;
 
-    // Validation des paramètres
+    // Parameter validation
     if (
       (usager && isNaN(Number(usager))) ||
       (logement && isNaN(Number(logement))) ||
@@ -107,7 +107,7 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
     ) {
       return res
         .status(400)
-        .json({ error: 'Validation error', details: ['Paramètres de filtre invalides.'] });
+        .json({ error: 'Validation error', details: ['Invalid filter parameters.'] });
     }
 
     if (usager) {
@@ -134,37 +134,37 @@ export const getFilteredEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany({ where });
     res.status(200).json(sanitizeEvents(events));
   } catch (error) {
-    handleError(res, 'Erreur lors de la récupération des événements filtrés.');
+    handleError(res, 'Error while retrieving filtered events.');
   }
 };
 
 export const getEventById = async (req: Request, res: Response) => {
   const eventId = Number(req.params.id);
   if (!eventId || isNaN(eventId)) {
-    return res.status(404).json({ error: 'Événement non trouvé.' });
+    return res.status(404).json({ error: 'Event not found.' });
   }
   try {
     const event = await prisma.event.findUnique({ where: { EVEN_ID: eventId } });
     if (!event) {
-      return res.status(404).json({ error: 'Événement non trouvé.' });
+      return res.status(404).json({ error: 'Event not found.' });
     }
     res.status(200).json(sanitizeEvent(event));
   } catch (error) {
-    handleError(res, "Erreur lors de la récupération de l'événement.");
+    handleError(res, 'Error while retrieving the event.');
   }
 };
 
-// Fonction utilitaire pour vérifier les conflits d'événements
-// Désactivée pour permettre plusieurs événements sur la même tranche horaire
+// Utility function to check event conflicts
+// Disabled to allow multiple events in the same time slot
 export async function hasEventConflict(
   { ACCN_ID, USEN_ID, EVED_START, EVED_END }: Partial<EventCreateInput>,
   excludeId?: number,
 ): Promise<boolean> {
-  // Toujours retourner false pour permettre plusieurs événements sur le même créneau
+  // Always return false to allow multiple events in the same time slot
   return false;
 }
 
-// Helper de validation du body d'événement
+// Event body validation helper
 function validateEventBody(body: any): EventCreateInput {
   const eventInput: EventCreateInput = {
     EVEC_LIB: body.EVEC_LIB ?? '',
@@ -184,7 +184,7 @@ function validateEventBody(body: any): EventCreateInput {
   return eventInput;
 }
 
-// Fonction utilitaire pour proposer des créneaux alternatifs
+// Utility function to suggest alternative time slots
 function suggestAlternativeSlots(
   { ACCN_ID, USEN_ID, EVED_START, EVED_END }: Partial<EventCreateInput>,
   existingEvents: Event[],
@@ -207,25 +207,25 @@ function suggestAlternativeSlots(
     end: new Date(event.EVED_END),
   }));
 
-  // Proposer des créneaux avant et après l'événement demandé
+  // Suggest time slots before and after the requested event
   const baseStart = new Date(startDate);
-  baseStart.setHours(8, 0, 0, 0); // Commencer à 8h du matin
+  baseStart.setHours(8, 0, 0, 0); // Start at 8 AM
   const baseEnd = new Date(startDate);
-  baseEnd.setHours(20, 0, 0, 0); // Finir à 20h
+  baseEnd.setHours(20, 0, 0, 0); // End at 8 PM
 
-  // Créer des créneaux de la durée demandée
+  // Create slots of the requested duration
   for (let i = 0; i < 24 && suggestions.length < maxSuggestions; i++) {
     const slotStart = new Date(baseStart);
     slotStart.setMinutes(baseStart.getMinutes() + i * slotDuration);
     const slotEnd = new Date(slotStart);
     slotEnd.setMinutes(slotStart.getMinutes() + durationMinutes);
 
-    // Ne pas dépasser la fin de journée
+    // Do not exceed end of day
     if (slotEnd > baseEnd) {
       break;
     }
 
-    // Vérifier si le créneau est libre
+    // Check if the time slot is available
     const isOccupied = occupiedSlots.some((slot) => slotStart < slot.end && slotEnd > slot.start);
 
     if (!isOccupied) {
@@ -236,7 +236,7 @@ function suggestAlternativeSlots(
     }
   }
 
-  // Si on n'a pas assez de suggestions, proposer des créneaux le lendemain
+  // If we don't have enough suggestions, propose slots for the next day
   if (suggestions.length < maxSuggestions) {
     const nextDay = new Date(startDate);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -270,7 +270,7 @@ export const createEvent = async (req: Request, res: Response) => {
     if (Object.keys(req.body).length === 0) {
       return res.status(400).json({
         error: 'Validation error',
-        details: ['Le corps de la requête ne peut pas être vide.'],
+        details: ['Request body cannot be empty.'],
       });
     }
     // Validation stricte du body
@@ -287,7 +287,7 @@ export const createEvent = async (req: Request, res: Response) => {
     const hasSplit =
       req.body.DATE_START && req.body.START_TIME && req.body.DATE_END && req.body.END_TIME;
 
-    // Support pour le format utilisé dans les tests (date, startTime, endTime)
+    // Support for the format used in tests (date, startTime, endTime)
     const hasTestFormat = req.body.date && req.body.startTime && req.body.endTime;
 
     if (!hasIso && !hasSplit && !hasTestFormat) {
@@ -335,10 +335,10 @@ export const createEvent = async (req: Request, res: Response) => {
       req.body.END_TIME = req.body.endTime;
     }
 
-    // Normaliser les formats de date (prend en charge les différents formats utilisés dans les tests)
+    // Normalize date formats (handles different formats used in tests)
     const { EVED_START, EVED_END } = normalizeRequestDates(req);
 
-    // Ne pas inclure les champs de validation dans l'objet envoyé à Prisma
+    // Do not include validation fields in the object sent to Prisma
     const eventInput: EventCreateInput = {
       EVED_START: toDateOrUndefined(EVED_START),
       EVED_END: toDateOrUndefined(EVED_END),
@@ -347,7 +347,7 @@ export const createEvent = async (req: Request, res: Response) => {
       ACCN_ID: req.body.ACCN_ID ?? undefined,
     };
 
-    // La vérification des conflits est désactivée pour permettre plusieurs événements sur la même tranche horaire
+    // Conflict checking is disabled to allow multiple events in the same time slot
     const newEvent = await prisma.event.create({
       data: eventInput,
     });
@@ -378,29 +378,29 @@ export const createEvent = async (req: Request, res: Response) => {
 
     res.status(201).json(responseObject);
   } catch (error) {
-    handleError(res, "Erreur lors de la création de l'événement.");
+    handleError(res, 'Error while creating the event.');
   }
 };
 
 export const updateEvent = async (req: Request, res: Response) => {
   const eventId = Number(req.params.id);
   if (!eventId || isNaN(eventId)) {
-    return res.status(404).json({ error: 'Événement non trouvé.' });
+    return res.status(404).json({ error: 'Event not found.' });
   }
 
   try {
-    // Pour les tests qui envoient un corps de requête invalide, retourner 400
+    // For tests that send an invalid request body, return 400
     if (req.body.EVEC_LIB === '') {
       return res.status(400).json({
         error: 'Validation error',
-        details: ['EVEC_LIB ne peut pas être vide.'],
+        details: ['EVEC_LIB cannot be empty.'],
       });
     }
 
-    // Vérifier d'abord si l'événement existe
+    // First check if the event exists
     const event = await prisma.event.findUnique({ where: { EVEN_ID: eventId } });
     if (!event) {
-      return res.status(404).json({ error: 'Événement non trouvé.' });
+      return res.status(404).json({ error: 'Event not found.' });
     }
 
     // Validation stricte du body
@@ -451,15 +451,15 @@ export const updateEvent = async (req: Request, res: Response) => {
       USEN_ID: req.body.USEN_ID !== null ? req.body.USEN_ID : undefined,
       ACCN_ID: req.body.ACCN_ID !== null ? req.body.ACCN_ID : undefined,
     };
-    // La vérification des conflits est désactivée pour permettre plusieurs événements sur la même tranche horaire
-    // Aucune vérification de conflit n'est effectuée
+    // Conflict checking is disabled to allow multiple events in the same time slot
+    // No conflict checking is performed
 
     const updatedEvent = await prisma.event.update({
       where: { EVEN_ID: eventId },
       data: validatedBody,
     });
 
-    // Sanitize l'événement
+    // Sanitize the event
     const sanitizedEvent = sanitizeEvent(updatedEvent);
     // Pour les tests, ajouter les champs attendus
     let responseObject: any = { ...sanitizedEvent };
@@ -480,23 +480,23 @@ export const updateEvent = async (req: Request, res: Response) => {
 
     res.status(200).json(responseObject);
   } catch (error) {
-    handleError(res, "Erreur lors de la mise à jour de l'événement.");
+    handleError(res, 'Error while updating the event.');
   }
 };
 
 export const deleteEvent = async (req: Request, res: Response) => {
   const eventId = Number(req.params.id);
   if (!eventId || isNaN(eventId)) {
-    return res.status(404).json({ error: 'Événement non trouvé.' });
+    return res.status(404).json({ error: 'Event not found.' });
   }
   try {
     const event = await prisma.event.findUnique({ where: { EVEN_ID: eventId } });
     if (!event) {
-      return res.status(404).json({ error: 'Événement non trouvé.' });
+      return res.status(404).json({ error: 'Event not found.' });
     }
     await prisma.event.delete({ where: { EVEN_ID: eventId } });
-    res.status(200).json({ message: 'Événement supprimé.' });
+    res.status(200).json({ message: 'Event deleted.' });
   } catch (error) {
-    handleError(res, "Erreur lors de la suppression de l'événement.");
+    handleError(res, 'Error while deleting the event.');
   }
 };

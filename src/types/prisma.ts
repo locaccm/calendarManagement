@@ -1,8 +1,8 @@
-// Définition manuelle des types pour les requêtes Prisma
+// Manual type definitions for Prisma queries
 
 /**
- * Type pour les entrées de fonction avec des dates optionnelles
- * Utilisé pour les fonctions de vérification de conflits et de suggestion de créneaux
+ * Type for function inputs with optional dates
+ * Used for conflict checking and time slot suggestion functions
  */
 export interface EventDateRange {
   ACCN_ID?: number | null;
@@ -12,8 +12,8 @@ export interface EventDateRange {
 }
 
 /**
- * Types pour les requêtes Prisma
- * Définis manuellement pour correspondre aux besoins spécifiques de l'application
+ * Types for Prisma queries
+ * Manually defined to match specific application needs
  */
 export interface EventWhereInput {
   EVEN_ID?: number | { equals?: number; in?: number[] };

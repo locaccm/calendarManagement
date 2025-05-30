@@ -5,7 +5,7 @@ const path = require('path');
 const testFilePath = path.join(__dirname, 'src/tests/eventController.mock.test.ts');
 let content = fs.readFileSync(testFilePath, 'utf8');
 
-// Mettre à jour le test createEvent pour refléter que les conflits sont autorisés
+// Update createEvent test to reflect that conflicts are allowed
 content = content.replace(
   /it\('should return 409 when there is a conflict', async \(\) => \{[\s\S]*?expect\(typedPrismaMock\.event\.create\)\.not\.toHaveBeenCalled\(\);[\s\S]*?expect\(mockResponse\.status\)\.toHaveBeenCalledWith\(409\);[\s\S]*?expect\(mockResponse\.json\)\.toHaveBeenCalled\(\);[\s\S]*?\}\);/,
   `it('should create an event even when there is a conflict (conflicts allowed)', async () => {
@@ -28,7 +28,7 @@ content = content.replace(
         ACCN_ID: 2,
       };
 
-      // Même en cas de conflit, l'événement doit être créé car les conflits sont autorisés
+      // Even with a conflict, the event should be created as conflicts are allowed
       typedPrismaMock.event.findFirst.mockResolvedValue({
         EVEN_ID: 2,
         EVEC_LIB: 'Existing Event',
@@ -50,7 +50,7 @@ content = content.replace(
     });`
 );
 
-// Mettre à jour le test updateEvent pour refléter que les conflits sont autorisés
+// Update updateEvent test to reflect that conflicts are allowed
 content = content.replace(
   /it\('should return 409 when there is a conflict', async \(\) => \{[\s\S]*?expect\(typedPrismaMock\.event\.update\)\.not\.toHaveBeenCalled\(\);[\s\S]*?expect\(mockResponse\.status\)\.toHaveBeenCalledWith\(409\);[\s\S]*?expect\(mockResponse\.json\)\.toHaveBeenCalled\(\);[\s\S]*?\}\);/,
   `it('should update an event even when there is a conflict (conflicts allowed)', async () => {
@@ -84,7 +84,7 @@ content = content.replace(
         ACCN_ID: 2,
       };
 
-      // Même en cas de conflit, l'événement doit être mis à jour car les conflits sont autorisés
+      // Even with a conflict, the event should be updated as conflicts are allowed
       typedPrismaMock.event.findUnique.mockResolvedValue(existingEvent);
       typedPrismaMock.event.findFirst.mockResolvedValue({
         EVEN_ID: 2,
@@ -104,7 +104,7 @@ content = content.replace(
     });`
 );
 
-// Écrire le fichier mis à jour
+// Write the updated file
 fs.writeFileSync(testFilePath, content, 'utf8');
 
-console.log('Tests de conflit mis à jour avec succès !');
+console.log('Conflict tests updated successfully!');

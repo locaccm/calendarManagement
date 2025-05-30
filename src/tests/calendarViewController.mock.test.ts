@@ -8,17 +8,17 @@ jest.mock('../prisma', () => ({
   default: mockDeep<PrismaClient>(),
 }));
 
-// Importer le mock après la définition du mock
+// Import mock after mock definition
 import prismaMock from '../prisma';
 
-// Importer les contrôleurs après avoir configuré les mocks
+// Import controllers after configuring mocks
 import {
   getEventsForDay,
   getEventsForWeek,
   getEventsForMonth,
 } from '../controllers/calendarViewController';
 
-// Typer correctement le mock pour éviter les erreurs TypeScript
+// Properly type the mock to avoid TypeScript errors
 const typedPrismaMock = prismaMock as unknown as DeepMockProxy<PrismaClient>;
 
 describe('Calendar View Controller', () => {
@@ -109,7 +109,7 @@ describe('Calendar View Controller', () => {
       await getEventsForDay(mockRequest as Request, mockResponse as Response);
 
       // Assert
-      // Peut être 400 (validation) ou 500 (erreur technique)
+      // Can be 400 (validation) or 500 (technical error)
       expect(mockResponse.status as jest.Mock).toHaveBeenCalledTimes(1);
       const callArg = (mockResponse.status as jest.Mock).mock.calls[0][0];
       expect([400, 500]).toContain(callArg);

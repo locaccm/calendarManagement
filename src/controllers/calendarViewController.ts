@@ -24,7 +24,7 @@ async function getEventsBetween(start: string, end: string): Promise<Event[]> {
   return sanitizeEvents(prismaEvents);
 }
 
-// Helpers pour transformer les résultats Prisma en Event stricts (tous les champs non-nuls)
+// Helpers to transform Prisma results into strict Events (all fields non-null)
 function sanitizeEvent(prismaEvent: any): Event {
   return {
     EVEN_ID: prismaEvent.EVEN_ID!,
@@ -47,7 +47,7 @@ export const getEventsForDay = async (req: Request, res: Response) => {
   try {
     const events: Event[] = await getEventsBetween(date!, date!);
 
-    // Ajouter des métadonnées pour faciliter l'implémentation front-end
+    // Add metadata to facilitate front-end implementation
     const result = {
       date: date,
       events: events,
@@ -67,7 +67,7 @@ export const getEventsForWeek = async (req: Request, res: Response) => {
 
   let firstDay: Date;
 
-  // Si date est fournie, calculer la semaine et l'année à partir de la date
+  // If date is provided, calculate week and year from the date
   if (isValidDateString(date)) {
     const dateObj = new Date(date!);
     const weekInfo = getISOWeekAndYear(dateObj);
@@ -90,7 +90,7 @@ export const getEventsForWeek = async (req: Request, res: Response) => {
   try {
     const events: Event[] = await getEventsBetween(start, end);
 
-    // Générer un tableau des jours de la semaine pour faciliter l'affichage
+    // Generate an array of week days to facilitate display
     const days = [];
     const currentDate = new Date(firstDay);
     for (let i = 0; i < 7; i++) {
@@ -98,7 +98,7 @@ export const getEventsForWeek = async (req: Request, res: Response) => {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Ajouter des métadonnées pour faciliter l'implémentation front-end
+    // Add metadata to facilitate front-end implementation
     const result = {
       week: Number(week),
       year: Number(year),
@@ -123,7 +123,7 @@ export const getEventsForMonth = async (req: Request, res: Response) => {
   let monthNum: number;
   let yearNum: number;
 
-  // Si date est fournie, extraire le mois et l'année
+  // If date is provided, extract month and year
   if (isValidDateString(date)) {
     const dateObj = new Date(date!);
     monthNum = dateObj.getMonth() + 1; // getMonth() retourne 0-11
@@ -148,7 +148,7 @@ export const getEventsForMonth = async (req: Request, res: Response) => {
 
     const events: Event[] = await getEventsBetween(start, end);
 
-    // Générer un tableau des jours du mois pour faciliter l'affichage
+    // Generate an array of month days to facilitate display
     const days = [];
     const daysInMonth = endDate.getDate();
     for (let i = 1; i <= daysInMonth; i++) {
@@ -157,7 +157,7 @@ export const getEventsForMonth = async (req: Request, res: Response) => {
       );
     }
 
-    // Ajouter des métadonnées pour faciliter l'implémentation front-end
+    // Add metadata to facilitate front-end implementation
     const result = {
       month: monthNum,
       year: yearNum,
