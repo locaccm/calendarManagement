@@ -1,4 +1,4 @@
-// Test pour améliorer la couverture de dist/utils/dateUtils.js
+// Test to improve coverage of dist/utils/dateUtils.js
 
 describe('Date Utils', () => {
   let dateUtils;

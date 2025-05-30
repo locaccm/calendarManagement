@@ -6,7 +6,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import 'reflect-metadata';
 
-// Chargement des variables d'environnement
+// Loading environment variables
 dotenv.config();
 
 const app = express();
@@ -18,47 +18,47 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
-// Configuration de Helmet avec une politique de sécurité adaptée à l'API
+// Helmet configuration with a security policy adapted to the API
 app.use(
   helmet({
-    // Configuration de la CSP avec des règles minimales mais sécurisées
+    // CSP configuration with minimal but secure rules
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        // Autoriser les connexions WebSocket pour le développement
+        // Allow WebSocket connections for development
         connectSrc: ["'self'", ...(process.env.NODE_ENV !== 'production' ? ['ws:'] : [])],
-        // Autoriser les scripts inline pour Swagger UI en développement
+        // Allow inline scripts for Swagger UI in development
         scriptSrc: [
           "'self'",
           ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
         ],
-        // Autoriser les styles inline pour Swagger UI
+        // Allow inline styles for Swagger UI
         styleSrc: ["'self'", "'unsafe-inline'"],
       },
     },
-    // Permettre le partage de ressources cross-origin pour l'API
+    // Allow cross-origin resource sharing for the API
     crossOriginResourcePolicy: { policy: 'cross-origin' },
   }),
 );
 
-// Swagger configuration de base
+// Basic Swagger configuration
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Calendar Management API',
       version: '1.0.0',
-      description: "API pour la gestion d'agenda immobilier",
+      description: 'API for real estate calendar management',
     },
     components: {
       schemas: {
         Event: {
           type: 'object',
           properties: {
-            evenId: { type: 'integer', description: "ID de l'événement (auto-incrémenté)" },
-            evecLib: { type: 'string', description: "Libellé de l'événement" },
-            EVED_START: { type: 'string', format: 'date', description: 'Date de début' },
-            EVED_END: { type: 'string', format: 'date', description: 'Date de fin' },
+            evenId: { type: 'integer', description: 'Event ID (auto-incremented)' },
+            evecLib: { type: 'string', description: 'Event label' },
+            EVED_START: { type: 'string', format: 'date', description: 'Start date' },
+            EVED_END: { type: 'string', format: 'date', description: 'End date' },
             USEN_ID: { type: 'integer', description: 'ID utilisateur (FK)' },
             ACCN_ID: { type: 'integer', description: 'ID logement (FK)' },
           },
@@ -70,22 +70,22 @@ const swaggerOptions = {
   apis: ['./src/routes/*.ts'],
 };
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-// Swagger uniquement en développement
+// Swagger only in development
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
-// Importation des routes événements
+// Import event routes
 import eventRoutes from './routes/eventRoutes';
 
-// Montage des routes événements
+// Mount event routes
 app.use('/', eventRoutes);
 
-// Route health check
+// Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Route racine
+// Root route
 app.get('/', (req, res) => {
   res.send('API Calendar Management');
 });

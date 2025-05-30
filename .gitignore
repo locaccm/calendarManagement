@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+coverage/
+coverage-summary.json
+
 
 # Environment variables
 .env

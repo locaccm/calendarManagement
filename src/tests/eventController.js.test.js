@@ -1,6 +1,6 @@
-// Test pour améliorer la couverture de dist/controllers/eventController.js
+// Test to improve coverage of dist/controllers/eventController.js
 
-// Mock des dépendances
+// Mock dependencies
 jest.mock('../data-source', () => ({
   AppDataSource: {
     getRepository: jest.fn(),
@@ -16,7 +16,7 @@ describe('Event Controller (JS version)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Configurer les mocks pour Request et Response
+    // Set up mocks for Request and Response
     mockRequest = {
       params: {},
       body: {},
@@ -27,7 +27,7 @@ describe('Event Controller (JS version)', () => {
       json: jest.fn().mockReturnThis(),
     };
 
-    // Configurer le mock pour le repository
+    // Set up mock for repository
     mockEventRepository = {
       find: jest.fn(),
       findOneBy: jest.fn(),
@@ -37,11 +37,11 @@ describe('Event Controller (JS version)', () => {
       delete: jest.fn(),
     };
 
-    // Configurer le mock pour AppDataSource.getRepository
+    // Set up mock for AppDataSource.getRepository
     const { AppDataSource } = require('../data-source');
     AppDataSource.getRepository.mockReturnValue(mockEventRepository);
 
-    // Importer le contrôleur d'événements compilé
+    // Import compiled event controller
     eventController = require('../controllers/eventController');
   });
 
@@ -64,7 +64,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Erreur lors de la récupération des événements.',
+        error: 'Error while retrieving events.',
       });
     });
   });
@@ -99,7 +99,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la récupération de l'événement.",
+        error: 'Error while retrieving the event.',
       });
     });
   });
@@ -188,7 +188,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la mise à jour de l'événement.",
+        error: 'Error while updating the event.',
       });
     });
 
@@ -203,7 +203,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la mise à jour de l'événement.",
+        error: 'Error while updating the event.',
       });
     });
   });
@@ -216,7 +216,7 @@ describe('Event Controller (JS version)', () => {
       await eventController.deleteEvent(mockRequest, mockResponse);
 
       expect(mockEventRepository.delete).toHaveBeenCalledWith({ EVEN_ID: 1 });
-      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Événement supprimé.' });
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Event deleted.' });
     });
 
     it('should return 404 if event not found', async () => {
@@ -237,7 +237,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la suppression de l'événement.",
+        error: 'Error while deleting the event.',
       });
     });
 
@@ -259,7 +259,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la récupération de l'événement.",
+        error: 'Error while retrieving the event.',
       });
     });
   });
@@ -348,7 +348,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la mise à jour de l'événement.",
+        error: 'Error while updating the event.',
       });
     });
 
@@ -363,7 +363,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la mise à jour de l'événement.",
+        error: 'Error while updating the event.',
       });
     });
   });
@@ -376,7 +376,7 @@ describe('Event Controller (JS version)', () => {
       await eventController.deleteEvent(mockRequest, mockResponse);
 
       expect(mockEventRepository.delete).toHaveBeenCalledWith({ EVEN_ID: 1 });
-      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Événement supprimé.' });
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Event deleted.' });
     });
 
     it('should return 404 if event not found', async () => {
@@ -397,7 +397,7 @@ describe('Event Controller (JS version)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: "Erreur lors de la suppression de l'événement.",
+        error: 'Error while deleting the event.',
       });
     });
   });
