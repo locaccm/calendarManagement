@@ -58,8 +58,39 @@ const swaggerOptions = {
         description: 'Serveur principal',
       },
     ],
-    components: {},
+    components: {
+      securitySchemes: {
+        apiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'Authorization',
+          description: 'Provide your access token or API key here',
+        },
+      },
+      schemas: {
+        Event: {
+          type: 'object',
+          properties: {
+            EVEN_ID: { type: 'integer', example: 1 },
+            EVEC_LIB: { type: 'string', example: 'Annual meeting' },
+            EVED_START: {
+              type: 'string',
+              format: 'date-time',
+              example: '2025-06-01T09:00:00.000Z',
+            },
+            EVED_END: { type: 'string', format: 'date-time', example: '2025-06-01T11:00:00.000Z' },
+            USEN_ID: { type: 'integer', example: 1 },
+            ACCN_ID: { type: 'integer', example: 2 },
+            startDate: { type: 'string', format: 'date', example: '2025-06-01' },
+            startTime: { type: 'string', example: '09:00' },
+            endDate: { type: 'string', format: 'date', example: '2025-06-01' },
+            endTime: { type: 'string', example: '11:00' },
+          },
+        },
+      },
+    },
   },
+  security: [{ apiKeyAuth: [] }],
   apis: ['./src/routes/*.ts'],
 };
 

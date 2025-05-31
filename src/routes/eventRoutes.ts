@@ -7,6 +7,7 @@ import {
   deleteEvent,
   getFilteredEvents,
 } from '../controllers/eventController';
+import { authorizeWithApi } from '../middleware/authorizationApi';
 import {
   getEventsForDay,
   getEventsForWeek,
@@ -21,7 +22,7 @@ import {
  */
 const router = Router();
 
-router.get('/events/filter', getFilteredEvents);
+router.get('/events/filter', authorizeWithApi({ rightName: 'filterEvents' }), getFilteredEvents);
 
 /**
  * @swagger
@@ -107,29 +108,16 @@ router.get('/events/filter', getFilteredEvents);
  *       403:
  *         description: Forbidden - Insufficient rights according to the Access API
  */
-router.get('/en/events/filter', getFilteredEvents);
+router.get('/en/events/filter', authorizeWithApi({ rightName: 'filterEvents' }), getFilteredEvents);
 
 /**
  * @swagger
- * /fr/evenements:
- *   get:
- *     summary: List of events
- *     tags: [Events]
- *     responses:
- *       200:
- *         description: Returns the list of events
- */
-
-// Route pour les tests
-router.get('/events', getEvents);
-router.get('/fr/evenements', getEvents);
-
-/**
- * @swagger
- * /en/events:
+ * /events:
  *   get:
  *     summary: List all events
  *     tags: [Events]
+ *     security:
+ *       - apiKeyAuth: []
  *     responses:
  *       200:
  *         description: Returns the list of events
@@ -140,7 +128,8 @@ router.get('/fr/evenements', getEvents);
  *               items:
  *                 $ref: '#/components/schemas/Event'
  */
-router.get('/en/events', getEvents);
+router.get('/events', authorizeWithApi({ rightName: 'getAllEvents' }), getEvents);
+// router.get('/fr/evenements', getEvents); // Removed duplicate endpoint
 
 /**
  * @swagger
@@ -148,26 +137,8 @@ router.get('/en/events', getEvents);
  *   get:
  *     summary: Get event by ID
  *     tags: [Events]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Event details
- *       404:
- *         description: Event not found
- *     x-language: fr
- */
-
-/**
- * @swagger
- * /events/{id}:
- *   get:
- *     summary: Get an event by ID
- *     tags: [Events]
+ *     security:
+ *       - apiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -183,94 +154,8 @@ router.get('/en/events', getEvents);
  *               $ref: '#/components/schemas/Event'
  *       404:
  *         description: Event not found
- *     x-language: en
  */
-router.get('/events/:id', getEventById);
-
-/**
- * @swagger
- * /events:
- *   post:
- *     summary: Create an event
- *     description: |
- *       Creates a new event in the calendar.
- *       Multiple date formats are accepted:
- *       1. Format ISO 8601 (EVED_START et EVED_END): "2025-05-15T10:00:00Z"
- *       2. Separate format (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
- *     tags: [Events]
- *     security:
- *       - apiKeyAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Event'
- *           examples:
- *             formatISO:
- *               summary: Format ISO 8601
- *               value: {
- *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Apartment visit",
- *                 "EVED_START": "2025-05-15T10:00:00Z",
- *                 "EVED_END": "2025-05-15T11:00:00Z",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *             formatSepare:
- *               summary: Separate format (one day)
- *               value: {
- *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Apartment visit",
- *                 "EVED_START": "2025-05-15T10:00:00Z",
- *                 "EVED_END": "2025-05-15T11:00:00Z",
- *                 "startDate": "2025-05-15",
- *                 "startTime": "10:00",
- *                 "endDate": "2025-05-15",
- *                 "endTime": "11:00",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *             formatMultiJours:
- *               summary: Separate format (multiple days)
- *               value: {
- *                 "EVEN_ID": 1,
- *                 "EVEC_LIB": "Real estate seminar",
- *                 "EVED_START": "2025-05-15T09:00:00Z",
- *                 "EVED_END": "2025-05-17T18:00:00Z",
- *                 "startDate": "2025-05-15",
- *                 "startTime": "09:00",
- *                 "endDate": "2025-05-17",
- *                 "endTime": "18:00",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *     responses:
- *       201:
- *         description: Event created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   description: Created event ID
- *                 message:
- *                   type: string
- *                   description: Message de confirmation
- *       400:
- *         description: Invalid data or event conflict
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized - Missing or invalid API key
- *       403:
- *         description: Access denied - Insufficient rights according to access API
- *     x-language: fr
- */
+router.get('/events/:id', authorizeWithApi({ rightName: 'getEventById' }), getEventById);
 
 /**
  * @swagger
@@ -354,100 +239,8 @@ router.get('/events/:id', getEventById);
  *         description: Unauthorized - Missing or invalid API key
  *       403:
  *         description: Forbidden - Insufficient rights according to the Access API
- *     x-language: en
  */
-router.post('/events', createEvent);
-
-/**
- * @swagger
- * /events/{id}:
- *   put:
- *     summary: Update an event
- *     description: |
- *       Updates an existing event in the calendar.
- *       Multiple date formats are accepted:
- *       1. Format ISO 8601 (EVED_START et EVED_END): "2025-05-15T10:00:00Z"
- *       2. Separate format (date, startTime, endTime): date="2025-05-15", startTime="10:00", endTime="11:00"
- *     tags: [Events]
- *     security:
- *       - apiKeyAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID of the event to update
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Event'
- *           examples:
- *             formatISO:
- *               summary: Format ISO 8601
- *               value: {
- *                 "EVEC_LIB": "Modified apartment visit",
- *                 "EVED_START": "2025-05-16T14:00:00Z",
- *                 "EVED_END": "2025-05-16T15:00:00Z",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *             formatSepare:
- *               summary: Separate format (one day)
- *               value: {
- *                 "EVEC_LIB": "Modified apartment visit",
- *                 "EVED_START": "2025-05-16T14:00:00Z",
- *                 "EVED_END": "2025-05-16T15:00:00Z",
- *                 "startDate": "2025-05-16",
- *                 "startTime": "14:00",
- *                 "endDate": "2025-05-16",
- *                 "endTime": "15:00",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *             formatMultiJours:
- *               summary: Separate format (multiple days)
- *               value: {
- *                 "EVEC_LIB": "Modified real estate seminar",
- *                 "EVED_START": "2025-05-16T09:00:00Z",
- *                 "EVED_END": "2025-05-18T18:00:00Z",
- *                 "startDate": "2025-05-16",
- *                 "startTime": "09:00",
- *                 "endDate": "2025-05-18",
- *                 "endTime": "18:00",
- *                 "USEN_ID": 1,
- *                 "ACCN_ID": 2
- *               }
- *     responses:
- *       200:
- *         description: Event updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 id:
- *                   type: integer
- *                   description: Updated event ID
- *                 message:
- *                   type: string
- *                   description: Message de confirmation
- *       400:
- *         description: Invalid data or event conflict
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Unauthorized - Missing or invalid API key
- *       403:
- *         description: Access denied - Insufficient rights according to access API
- *       404:
- *         description: Event not found
- *     x-language: fr
- */
+router.post('/events', authorizeWithApi({ rightName: 'createEvent' }), createEvent);
 
 /**
  * @swagger
@@ -537,9 +330,8 @@ router.post('/events', createEvent);
  *         description: Forbidden - Insufficient rights according to the Access API
  *       404:
  *         description: Event not found
- *     x-language: en
  */
-router.put('/events/:id', updateEvent);
+router.put('/events/:id', authorizeWithApi({ rightName: 'updateEvent' }), updateEvent);
 
 /**
  * @swagger
@@ -547,6 +339,8 @@ router.put('/events/:id', updateEvent);
  *   delete:
  *     summary: Delete an event
  *     tags: [Events]
+ *     security:
+ *       - apiKeyAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -558,35 +352,14 @@ router.put('/events/:id', updateEvent);
  *         description: Event deleted
  *       404:
  *         description: Event not found
- *     x-language: fr
  */
-
-/**
- * @swagger
- * /events/{id}:
- *   delete:
- *     summary: Delete an event
- *     tags: [Events]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Event deleted
- *       404:
- *         description: Event not found
- *     x-language: en
- */
-router.delete('/events/:id', deleteEvent);
+router.delete('/events/:id', authorizeWithApi({ rightName: 'deleteEvent' }), deleteEvent);
 
 /**
  * @swagger
  * tags:
  *   name: Calendar Views
- *   description: Vues du calendrier (jour, semaine, mois)
+ *   description: Calendar views (day, week, month)
  */
 
 /**
@@ -673,7 +446,7 @@ router.delete('/events/:id', deleteEvent);
  *       403:
  *         description: Access denied - Insufficient rights according to access API
  */
-router.get('/calendar/day', getEventsForDay);
+router.get('/calendar/day', authorizeWithApi({ rightName: 'getUpcomingEvents' }), getEventsForDay);
 
 /**
  * @swagger
@@ -737,12 +510,12 @@ router.get('/calendar/day', getEventsForDay);
  *                 startDate:
  *                   type: string
  *                   format: date
- *                   description: Premier jour de la semaine
+ *                   description: First day of the week
  *                   example: "2025-05-12"
  *                 endDate:
  *                   type: string
  *                   format: date
- *                   description: Dernier jour de la semaine
+ *                   description: Last day of the week
  *                   example: "2025-05-18"
  *                 days:
  *                   type: array
@@ -795,7 +568,11 @@ router.get('/calendar/day', getEventsForDay);
  *       403:
  *         description: Access denied - Insufficient rights according to access API
  */
-router.get('/calendar/week', getEventsForWeek);
+router.get(
+  '/calendar/week',
+  authorizeWithApi({ rightName: 'getUpcomingEvents' }),
+  getEventsForWeek,
+);
 
 /**
  * @swagger
@@ -922,6 +699,10 @@ router.get('/calendar/week', getEventsForWeek);
  *       403:
  *         description: Access denied - Insufficient rights according to access API
  */
-router.get('/calendar/month', getEventsForMonth);
+router.get(
+  '/calendar/month',
+  authorizeWithApi({ rightName: 'getEventsByCalendar' }),
+  getEventsForMonth,
+);
 
 export default router;
