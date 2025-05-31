@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Prefer DATABASE_URL from environment (CI), otherwise load from .env files for local dev
+// Load environment variables if DATABASE_URL is not set
 if (!process.env.DATABASE_URL) {
   const env = process.env.NODE_ENV || 'development';
   switch (env) {
@@ -17,15 +17,19 @@ if (!process.env.DATABASE_URL) {
   }
 }
 
+// Throw a clear error if DATABASE_URL is still not set
 if (!process.env.DATABASE_URL) {
   throw new Error(
     'DATABASE_URL is not defined. Please set it in your environment variables or .env files.',
   );
 }
 
+// Validate NODE_ENV and fallback to 'development' if undefined
+const environment = process.env.NODE_ENV || 'development';
+
 // Configure Prisma client with logging in development only
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  log: environment === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 
 export default prisma;
