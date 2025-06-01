@@ -5,7 +5,6 @@ import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import 'reflect-metadata';
-import path from 'path';
 import eventRoutes from './routes/eventRoutes';
 
 // Chargement des variables d'environnement
@@ -17,7 +16,7 @@ app.use(express.json());
 // Configuration CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN ?? '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
@@ -44,8 +43,8 @@ const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: process.env.API_TITLE || 'API de Gestion de Calendrier',
-      version: process.env.API_VERSION || '1.0.0',
+      title: process.env.API_TITLE ?? 'API de Gestion de Calendrier',
+      version: process.env.API_VERSION ?? '1.0.0',
       description: "API pour la gestion d'agenda immobilier",
       contact: {
         name: 'Support',
@@ -122,7 +121,7 @@ app.get('/', (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>${process.env.API_TITLE || 'API de Gestion de Calendrier'}</title>
+        <title>${process.env.API_TITLE ?? 'API de Gestion de Calendrier'}</title>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
@@ -198,14 +197,14 @@ app.get('/', (req, res) => {
         <div class="container">
           <div class="header">
             <div class="logo">🗓️</div>
-            <h1>${process.env.API_TITLE || 'API de Gestion de Calendrier'}</h1>
+            <h1>${process.env.API_TITLE ?? 'API de Gestion de Calendrier'}</h1>
             <p>Welcome to the Calendar Management API. This API allows you to manage events, reservations, and availability for accommodations.</p>
           </div>
           <div>
             <a href="/api-docs" class="btn">Access API Documentation</a>
           </div>
           <div class="info">
-            <p>Version: ${process.env.API_VERSION || '1.0.0'}</p>
+            <p>Version: ${process.env.API_VERSION ?? '1.0.0'}</p>
           </div>
         </div>
       </body>

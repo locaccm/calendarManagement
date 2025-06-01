@@ -129,7 +129,6 @@ export const getEventsForMonth = async (req: Request, res: Response) => {
     monthNum = dateObj.getMonth() + 1; // getMonth() retourne 0-11
     yearNum = dateObj.getFullYear();
     month = String(monthNum);
-    year = String(yearNum);
   } else if (!month || !year || isNaN(Number(month)) || isNaN(Number(year))) {
     return res
       .status(400)

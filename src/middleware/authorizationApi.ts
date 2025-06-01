@@ -11,14 +11,14 @@ type AuthorizeApiOptions = {
 const ACCESS_API_URL = process.env.ACCESS_API_URL || 'http://localhost:4000/access/check';
 
 export function authorizeWithApi({ rightName, apiUrl }: AuthorizeApiOptions) {
-  const url = apiUrl || ACCESS_API_URL;
+  const url = apiUrl ?? ACCESS_API_URL;
   return async (req: Request, res: Response, next: NextFunction) => {
     // For tests, check if mockAxiosPost is defined globally
     // @ts-ignore - mockAxiosPost is defined in tests
     const mockPost = global.mockAxiosPost;
 
     const token =
-      req.header('Authorization')?.replace('Bearer ', '') || req.header('X-Access-Token');
+      req.header('Authorization')?.replace('Bearer ', '') ?? req.header('X-Access-Token');
 
     if (!token) {
       return res.status(401).json({ error: 'Token manquant' });

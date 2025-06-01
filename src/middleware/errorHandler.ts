@@ -4,9 +4,9 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   if (res.headersSent) {
     return next(err);
   }
-  const status = err.status || 500;
+  const status = err.status ?? 500;
   res.status(status).json({
-    error: err.message || 'Internal Server Error',
-    details: err.details || undefined,
+    error: err.message ?? 'Internal Server Error',
+    details: err.details ?? undefined,
   });
 }

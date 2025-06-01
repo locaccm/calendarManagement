@@ -27,7 +27,7 @@ const eventBaseSchema = z.object({
 export const eventCreateSchema = eventBaseSchema.refine(
   (data) => {
     // Either both ISO dates, or the three separate fields
-    const hasISO = data.EVED_START && data.EVED_END;
+    const hasISO = data.EVED_START ?? data.EVED_END;
     const hasSplit = data.date && data.startTime && data.endTime;
     return hasISO || hasSplit;
   },

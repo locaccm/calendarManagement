@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { Event } from '../models/Event';
-import { EventExtended } from '../models/EventExtended';
 import { EventWhereInput, EventCreateInput } from '../types/prisma';
 import { normalizeRequestDates } from '../utils/dateFormatHelper';
 

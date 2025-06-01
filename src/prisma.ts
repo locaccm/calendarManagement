@@ -1,12 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
-import path from 'path';
-
 // Detect if we're being imported by the coverage test file
 // This is a special case where we need to allow the tests to mock our behavior
 const isCoverageTest =
   process.env.NODE_ENV === 'test' && new Error().stack?.includes('prisma.coverage.test.ts');
-
 // Skip all actual logic if we're in a coverage test
 // The coverage tests will mock our behavior as needed
 if (!isCoverageTest) {
@@ -42,7 +39,7 @@ if (!isCoverageTest) {
 }
 
 // Validate NODE_ENV and fallback to 'development' if undefined
-const environment = process.env.NODE_ENV || 'development';
+const environment = process.env.NODE_ENV ?? 'development';
 
 // Configure Prisma client with logging in development only
 let prisma: PrismaClient;
