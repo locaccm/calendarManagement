@@ -33,7 +33,7 @@ describe('Authorization API Middleware', () => {
 
     // Assert
     expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token manquant' });
+    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token missing' });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 
@@ -69,8 +69,8 @@ describe('Authorization API Middleware', () => {
       expect.any(String),
       expect.objectContaining({
         token: 'valid-token',
-        rightName: 'test-right'
-      })
+        rightName: 'test-right',
+      }),
     );
     expect(nextFunction).toHaveBeenCalled();
   });
@@ -92,8 +92,8 @@ describe('Authorization API Middleware', () => {
       expect.any(String),
       expect.objectContaining({
         token: 'valid-token',
-        rightName: 'test-right'
-      })
+        rightName: 'test-right',
+      }),
     );
     expect(nextFunction).toHaveBeenCalled();
   });
@@ -101,8 +101,8 @@ describe('Authorization API Middleware', () => {
   test('should return 403 when API denies access', async () => {
     // Arrange
     mockRequest.header = jest.fn().mockReturnValue('Bearer valid-token');
-    mockedAxios.post.mockRejectedValueOnce({ 
-      response: { status: 403 } 
+    mockedAxios.post.mockRejectedValueOnce({
+      response: { status: 403 },
     });
     const middleware = authorizeWithApi({ rightName: 'test-right' });
 
@@ -118,8 +118,8 @@ describe('Authorization API Middleware', () => {
   test('should return 401 when API returns 401', async () => {
     // Arrange
     mockRequest.header = jest.fn().mockReturnValue('Bearer valid-token');
-    mockedAxios.post.mockRejectedValueOnce({ 
-      response: { status: 401 } 
+    mockedAxios.post.mockRejectedValueOnce({
+      response: { status: 401 },
     });
     const middleware = authorizeWithApi({ rightName: 'test-right' });
 
@@ -205,8 +205,8 @@ describe('Authorization API Middleware', () => {
   test('should handle mockPost returning 403', async () => {
     // Arrange
     mockRequest.header = jest.fn().mockReturnValue('Bearer valid-token');
-    const mockPost = jest.fn().mockRejectedValueOnce({ 
-      response: { status: 403 } 
+    const mockPost = jest.fn().mockRejectedValueOnce({
+      response: { status: 403 },
     });
     // @ts-ignore - mockAxiosPost is defined in tests
     global.mockAxiosPost = mockPost;

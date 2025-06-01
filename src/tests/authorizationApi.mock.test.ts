@@ -65,7 +65,7 @@ describe('authorizeWithApi middleware', () => {
   it('denies access if no token is sent', async () => {
     const res = await request(app).get('/protected');
     expect(res.status).toBe(401);
-    expect(res.body.error).toMatch(/Token manquant/);
+    expect(res.body.error).toMatch(/Token missing/);
   });
 
   it("retourne 500 si l'API centrale plante", async () => {
