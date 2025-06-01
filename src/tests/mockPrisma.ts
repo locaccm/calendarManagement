@@ -36,8 +36,8 @@ const mockUser = {
   USEC_MAIL: 'testuser@example.com',
   USEC_PASSWORD: 'hash',
   USEC_PHONE: null,
-  USEC_TEL: null, // Champ manquant
-  USEC_ADDRESS: null, // Champ manquant
+  USEC_TEL: null, // Missing field
+  USEC_ADDRESS: null, // Missing field
   USEC_CREATED_AT: new Date(),
   USEC_UPDATED_AT: new Date(),
   USEN_INVITE: null,

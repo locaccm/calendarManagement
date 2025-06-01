@@ -273,7 +273,7 @@ function suggestAlternativeSlots(
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
-    // Pour les tests qui envoient un corps vide
+    // For tests that send an empty body
     if (Object.keys(req.body).length === 0) {
       return res.status(400).json({
         error: 'Validation error',
@@ -282,7 +282,7 @@ export const createEvent = async (req: Request, res: Response) => {
     }
     // Validation stricte du body
     if (!req.body.EVEC_LIB || !req.body.USEN_ID || !req.body.ACCN_ID) {
-      // Retourner 400 pour les tests, comme attendu
+      // Return 400 for tests, as expected
       return res.status(400).json({
         error: 'Validation error',
         details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
@@ -331,7 +331,7 @@ export const createEvent = async (req: Request, res: Response) => {
       ) {
         return res.status(400).json({
           error: 'Validation error',
-          details: ['date, startTime ou endTime invalide(s).'],
+          details: ['date, startTime or endTime invalid.'],
         });
       }
 
@@ -448,7 +448,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       }
     }
 
-    // Normaliser les formats de date
+    // Normalize date formats
     const { EVED_START, EVED_END } = normalizeRequestDates(req);
 
     const validatedBody: EventCreateInput = {
