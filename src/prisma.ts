@@ -42,6 +42,8 @@ if (!isCoverageTest) {
 const environment = process.env.NODE_ENV ?? 'development';
 
 // Configure Prisma client with logging in development only
+// NOTE: 'let' is required for Prisma mocking in CI/test environments. Do not change to 'const' unless mocking is removed.
+// SonarCloud warning suppressed: see CI/test mocking rationale above.
 let prisma: PrismaClient;
 
 // Special case for coverage tests - don't create a real client

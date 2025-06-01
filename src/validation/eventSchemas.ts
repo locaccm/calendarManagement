@@ -29,7 +29,7 @@ export const eventCreateSchema = eventBaseSchema.refine(
     // Either both ISO dates, or the three separate fields
     const hasIso = data.EVED_START ?? data.EVED_END;
     const hasSplit = data.date && data.startTime && data.endTime;
-    return hasIso || hasSplit; // Use camelCase internally
+    return hasIso ?? hasSplit; // Use camelCase internally
   },
   {
     message: 'Il faut fournir soit EVED_START/EVED_END, soit date/startTime/endTime',

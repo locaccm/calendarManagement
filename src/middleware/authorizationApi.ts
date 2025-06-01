@@ -15,7 +15,14 @@ function extractToken(req: Request): string | undefined {
   return req.header('Authorization')?.replace('Bearer ', '') ?? req.header('X-Access-Token');
 }
 
-async function handleTestAuthorization(token: string, mockPost: any, url: string, rightName: string, res: Response, next: NextFunction) {
+async function handleTestAuthorization(
+  token: string,
+  mockPost: any,
+  url: string,
+  rightName: string,
+  res: Response,
+  next: NextFunction,
+) {
   if (token === 'test-token') return next();
   if (typeof mockPost === 'function' && token === 'forbidden-token') {
     return res.status(403).json({ error: 'Access denied by central policy' });
@@ -44,7 +51,13 @@ async function handleTestAuthorization(token: string, mockPost: any, url: string
   return null; // Not handled by test/mocking logic
 }
 
-async function authorizeViaApi(url: string, token: string, rightName: string, res: Response, next: NextFunction) {
+async function authorizeViaApi(
+  url: string,
+  token: string,
+  rightName: string,
+  res: Response,
+  next: NextFunction,
+) {
   try {
     await axios.post(url, { token, rightName });
     return next();
@@ -62,21 +75,52 @@ async function authorizeViaApi(url: string, token: string, rightName: string, re
   }
 }
 
+// Main authorization middleware orchestrator
 export function authorizeWithApi({ rightName, apiUrl }: AuthorizeApiOptions) {
   const url = apiUrl ?? ACCESS_API_URL;
   return async (req: Request, res: Response, next: NextFunction) => {
-    // For tests, check if mockAxiosPost is defined globally
-    // @ts-ignore - mockAxiosPost is defined in tests
-    const mockPost = global.mockAxiosPost;
-
+    // Extract token from request
     const token = extractToken(req);
     if (!token) {
-      return res.status(401).json({ error: 'Token missing' });
+      return handleMissingToken(res);
     }
-    // Handle test/mocking logic
+    // Handle test/mocking logic if present
+    // @ts-ignore - mockAxiosPost is defined in tests
+    const mockPost = global.mockAxiosPost;
     const testResult = await handleTestAuthorization(token, mockPost, url, rightName, res, next);
     if (testResult !== null) return testResult;
-    // Not a test/mocking scenario: call API
-    return authorizeViaApi(url, token, rightName, res, next);
+    // Call central API for authorization
+    return callApiAuthorization(url, token, rightName, res, next);
   };
 }
+
+// Helper to handle missing token response
+function handleMissingToken(res: Response) {
+  return res.status(401).json({ error: 'Token missing' });
+}
+
+// Helper to call central API for authorization
+async function callApiAuthorization(
+  url: string,
+  token: string,
+  rightName: string,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    await axios.post(url, { token, rightName });
+    return next();
+  } catch (err: any) {
+    if (err.response) {
+      if (err.response.status === 403) {
+        return res.status(403).json({ error: 'Access denied by central policy' });
+      }
+      if (err.response.status === 401) {
+        return res.status(401).json({ error: 'Not authenticated (Central API)' });
+      }
+    }
+    // For any other error, return server error
+    return res.status(500).json({ error: 'Error during access verification' });
+  }
+}
+

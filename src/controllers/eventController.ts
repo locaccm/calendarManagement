@@ -289,7 +289,7 @@ function suggestAlternativeSlots(
 }
 
 // --- Helper functions for createEvent complexity reduction ---
-function validateEventBodyFields(body: any): string[] {
+function validateRequiredEventFields(body: any): string[] {
   const missing: string[] = [];
   if (!body.EVEC_LIB) missing.push('EVEC_LIB');
   if (!body.USEN_ID) missing.push('USEN_ID');
@@ -392,7 +392,7 @@ export const createEvent = async (req: Request, res: Response) => {
       });
     }
     // Validate required fields
-    const missingFields = validateEventBodyFields(req.body);
+    const missingFields = validateRequiredEventFields(req.body);
     if (missingFields.length > 0) {
       return res.status(400).json({
         error: 'Validation error',
@@ -442,7 +442,7 @@ export const createEvent = async (req: Request, res: Response) => {
 };
 
 // --- Helper functions for updateEvent complexity reduction ---
-function validateUpdateEventBodyFields(body: any): string[] {
+function validateRequiredEventFields(body: any): string[] {
   const missing: string[] = [];
   if (!body.EVEC_LIB) missing.push('EVEC_LIB');
   if (!body.USEN_ID) missing.push('USEN_ID');
@@ -527,7 +527,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Event not found.' });
     }
     // Validate required fields
-    const missingFields = validateUpdateEventBodyFields(req.body);
+    const missingFields = validateRequiredEventFields(req.body);
     if (missingFields.length > 0) {
       return res.status(400).json({
         error: 'Validation error',

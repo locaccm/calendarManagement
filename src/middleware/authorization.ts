@@ -12,7 +12,7 @@ export interface AuthUser {
 // Generic authorization middleware
 export function authorize(roles: UserRole[] = [], ownOnly = false) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user = req.user as AuthUser | undefined;
+    const user = req.user;
     if (!user) {
       return res.status(401).json({ error: 'Not authenticated' });
     }
