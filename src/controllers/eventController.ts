@@ -290,45 +290,72 @@ function suggestAlternativeSlots(
 
 // --- Helper functions for createEvent complexity reduction ---
 // Validates required fields and formats for event creation and update
-function validateRequiredEventFields(body: any, invalidDateStatus: number = 500): { status: number; details: string[] } | null {
+function validateRequiredEventFields(
+  body: any,
+  invalidDateStatus: number = 500,
+): { status: number; details: string[] } | null {
   // 1. Check required fields
   if (!body.EVEC_LIB || !body.USEN_ID || !body.ACCN_ID) {
-    return { status: 400, details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'] };
+    return {
+      status: 400,
+      details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
+    };
   }
 
   // 2. Accept either ISO dates or split date/time fields
   const hasIso = body.EVED_START && body.EVED_END;
   const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
   const hasAltSplit = body.date && body.startTime && body.endTime;
-
   if (!hasIso && !hasSplit && !hasAltSplit) {
-    return { status: 400, details: ['Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.'] };
+    return {
+      status: 400,
+      details: [
+        'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
+      ],
+    };
   }
-
   // Special case for updateEvent: English error message
   if (body._updateEvent && !hasIso && !hasSplit && !hasAltSplit) {
-    return { status: 400, details: ['You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.'] };
-  }
+    return {
+      status: 400,
+      details: [
+        'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
+      ],
+    };
   }
 
   // 3. Validate ISO format
   if (hasIso) {
     if (!isValidDate(body.EVED_START) || !isValidDate(body.EVED_END)) {
-      return { status: invalidDateStatus, details: ['EVED_START ou EVED_END invalide(s).'] };
+      return {
+        status: invalidDateStatus,
+        details: ['EVED_START ou EVED_END invalide(s).'],
+      };
     }
   }
 
   // 4. Validate split format
   if (hasSplit) {
-    if (!isValidDate(body.DATE_START) || !isValidDate(body.DATE_END) || !isValidTime(body.START_TIME) || !isValidTime(body.END_TIME)) {
-      return { status: invalidDateStatus, details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'] };
+    if (
+      !isValidDate(body.DATE_START) ||
+      !isValidDate(body.DATE_END) ||
+      !isValidTime(body.START_TIME) ||
+      !isValidTime(body.END_TIME)
+    ) {
+      return {
+        status: invalidDateStatus,
+        details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
+      };
     }
   }
 
   // 5. Validate alt split format
   if (hasAltSplit) {
     if (!isValidDate(body.date) || !isValidTime(body.startTime) || !isValidTime(body.endTime)) {
-      return { status: invalidDateStatus, details: ['date, startTime ou endTime invalide(s).'] };
+      return {
+        status: invalidDateStatus,
+        details: ['date, startTime ou endTime invalide(s).'],
+      };
     }
   }
 
