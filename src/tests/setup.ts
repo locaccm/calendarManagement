@@ -3,9 +3,10 @@ import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import { createMockPrismaClient, setupPrismaMocks, resetPrismaMocks } from './mockPrisma';
 import dotenv from 'dotenv';
 
-const execPromise = promisify(exec);
+const execAsync = promisify(exec);
 let container: StartedTestContainer;
 let prisma: PrismaClient | any;
 
@@ -65,9 +66,9 @@ async function setupTestDatabase() {
     // Create a new PrismaClient instance
     prisma = new PrismaClient();
 
-    // Run Prisma migrations
+    // Run migrations
     try {
-      await execPromise('npx prisma migrate deploy');
+      await execAsync(`cd ${path.resolve(__dirname, '../..')} && npx prisma migrate deploy`);
       console.log('Migrations applied successfully');
     } catch (error) {
       console.error('Error applying migrations:', error);
