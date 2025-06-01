@@ -29,9 +29,10 @@ jobs:
           echo "DATABASE_URL=postgresql://fake:fake@localhost:5432/fake_db?schema=public" > .env
           echo "NODE_ENV=test" >> .env
           echo "CI=true" >> .env
+          echo "SKIP_DB_CONNECTION=true" >> .env
 
       - name: Verify .env file creation
-        run: echo ".env file has been created"
+        run: cat .env
         
       - name: Generate Prisma Client
         run: npx prisma generate
@@ -44,6 +45,15 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: |
+            -Dsonar.projectKey=calendarManagement
+            -Dsonar.sources=src
+            -Dsonar.exclusions=**/*.test.ts,**/*.spec.ts,**/tests/**
+            -Dsonar.tests=src/tests
+            -Dsonar.test.inclusions=**/*.test.ts,**/*.spec.ts
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.verbose=true
 
   eslint:
     name: ESLint Check

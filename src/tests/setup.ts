@@ -21,27 +21,8 @@ async function setupTestDatabase() {
   // If running in CI, use a mock Prisma client instead of a real database
   if (isCI) {
     console.log('Running in CI environment - using mock Prisma client');
-    // Create a mock Prisma client with common methods
-    prisma = {
-      event: {
-        findMany: jest.fn().mockResolvedValue([]),
-        findUnique: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue({ id: 1 }),
-        update: jest.fn().mockResolvedValue({ id: 1 }),
-        delete: jest.fn().mockResolvedValue({ id: 1 }),
-        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-      },
-      user: {
-        findFirst: jest.fn().mockResolvedValue({ USEN_ID: 1 }),
-        upsert: jest.fn().mockResolvedValue({ USEN_ID: 1 }),
-      },
-      accommodation: {
-        findFirst: jest.fn().mockResolvedValue({ ACCO_ID: 1 }),
-        create: jest.fn().mockResolvedValue({ ACCO_ID: 1 }),
-      },
-      $queryRaw: jest.fn().mockResolvedValue([{ result: 'success' }]),
-      $disconnect: jest.fn().mockResolvedValue(undefined),
-    };
+    // Use our centralized mock Prisma client implementation
+    prisma = createMockPrismaClient();
     // Set a fake DATABASE_URL for tests that check for its existence
     process.env.DATABASE_URL = 'postgresql://fake:fake@localhost:5432/fake_db?schema=public';
     return prisma;
@@ -84,26 +65,8 @@ async function setupTestDatabase() {
 // Helper function to set up a mock Prisma client
 function setupMockPrisma() {
   console.log('Using mock Prisma client as fallback');
-  prisma = {
-    event: {
-      findMany: jest.fn().mockResolvedValue([]),
-      findUnique: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockResolvedValue({ id: 1 }),
-      update: jest.fn().mockResolvedValue({ id: 1 }),
-      delete: jest.fn().mockResolvedValue({ id: 1 }),
-      deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
-    },
-    user: {
-      findFirst: jest.fn().mockResolvedValue({ USEN_ID: 1 }),
-      upsert: jest.fn().mockResolvedValue({ USEN_ID: 1 }),
-    },
-    accommodation: {
-      findFirst: jest.fn().mockResolvedValue({ ACCO_ID: 1 }),
-      create: jest.fn().mockResolvedValue({ ACCO_ID: 1 }),
-    },
-    $queryRaw: jest.fn().mockResolvedValue([{ result: 'success' }]),
-    $disconnect: jest.fn().mockResolvedValue(undefined),
-  };
+  // Use our centralized mock Prisma client implementation
+  prisma = createMockPrismaClient();
   return prisma;
 }
 
@@ -112,19 +75,8 @@ export async function resetDatabase() {
   try {
     // If using a mock client, just reset the mock
     if (isCI || !container) {
-      if (
-        prisma.event &&
-        prisma.event.deleteMany &&
-        typeof prisma.event.deleteMany === 'function'
-      ) {
-        // Reset the mock call history
-        if (jest.isMockFunction(prisma.event.deleteMany)) {
-          prisma.event.deleteMany.mockClear();
-        } else {
-          // If it's a real client, delete all data
-          await prisma.event.deleteMany({});
-        }
-      }
+      // Use our centralized reset function
+      resetPrismaMocks(prisma);
       console.log('Mock database reset successfully');
       return;
     }
