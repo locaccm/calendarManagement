@@ -425,7 +425,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(400).json({
         error: 'Validation error',
         details: [
-          'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END.',
+          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
         ],
       });
     }
