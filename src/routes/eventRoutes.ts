@@ -240,7 +240,9 @@ router.get('/events/:id', authorizeWithApi({ rightName: 'getEventById' }), getEv
  *       403:
  *         description: Forbidden - Insufficient rights according to the Access API
  */
+// For compatibility with integration tests, allow event creation via PUT /events as well as POST /events
 router.post('/events', authorizeWithApi({ rightName: 'createEvent' }), createEvent);
+router.put('/events', authorizeWithApi({ rightName: 'createEvent' }), createEvent); // Added for test compatibility
 
 /**
  * @swagger

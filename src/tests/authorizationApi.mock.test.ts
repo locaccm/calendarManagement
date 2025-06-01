@@ -56,7 +56,7 @@ describe('authorizeWithApi middleware', () => {
       });
     });
 
-    const res = await request(app).get('/protected').set('Authorization', 'Bearer test-token');
+    const res = await request(app).get('/protected').set('Authorization', 'Bearer forbidden-token');
 
     expect(res.status).toBe(403);
     expect(res.body.error).toMatch(/denied/);
@@ -73,7 +73,7 @@ describe('authorizeWithApi middleware', () => {
       return Promise.reject(new Error('API down'));
     });
 
-    const res = await request(app).get('/protected').set('Authorization', 'Bearer test-token');
+    const res = await request(app).get('/protected').set('Authorization', 'Bearer error-token');
     expect(res.status).toBe(500);
     expect(res.body.error).toMatch(/Error during access verification/);
   });

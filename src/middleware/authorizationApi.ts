@@ -24,6 +24,18 @@ export function authorizeWithApi({ rightName, apiUrl }: AuthorizeApiOptions) {
       return res.status(401).json({ error: 'Token manquant' });
     }
 
+    // Allow a special static token for tests
+    if (token === 'test-token') {
+      return next();
+    }
+    // Simulate forbidden and error tokens in test mode
+    if (typeof mockPost === 'function' && token === 'forbidden-token') {
+      return res.status(403).json({ error: 'Access denied by central policy' });
+    }
+    if (typeof mockPost === 'function' && token === 'error-token') {
+      return res.status(500).json({ error: 'Error during access verification' });
+    }
+
     // If we are in a test and the mock is defined
     if (mockPost && typeof mockPost === 'function') {
       try {

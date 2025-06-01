@@ -40,7 +40,8 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events').send(event);
+    const res = await request(app).post('/events')
+      .set('Authorization', 'Bearer test-token').send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-06-01');
@@ -60,7 +61,8 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events').send(event);
+    const res = await request(app).post('/events')
+      .set('Authorization', 'Bearer test-token').send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-07-10');
@@ -79,7 +81,8 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events').send(event);
+    const res = await request(app).post('/events')
+      .set('Authorization', 'Bearer test-token').send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-08-01');
@@ -96,7 +99,77 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: 102,
       ACCN_ID: 102,
     };
-    const res = await request(app).post('/events').send(event);
+    const res = await request(app).post('/events')
+      .set('Authorization', 'Bearer test-token').send(event);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Validation error');
+  });
+
+  it('PUT /events accepte format ISO et retourne les bons champs date/heure', async () => {
+    const event = {
+      EVEC_LIB: 'Test ISO',
+      EVED_START: '2025-06-01T09:00:00Z',
+      EVED_END: '2025-06-01T11:00:00Z',
+      USEN_ID: userId,
+      ACCN_ID: accnId,
+    };
+    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
+    if ([201, 200].includes(res.status)) {
+      expect(res.body.DATE_START).toBe('2025-06-01');
+      expect(res.body.DATE_END).toBe('2025-06-01');
+      expect(res.body.START_TIME).toBe('09:00');
+      expect(res.body.END_TIME).toBe('11:00');
+      expect(res.body.DATE_START).toBe(res.body.DATE_END); // same day
+    }
+  });
+
+  it('PUT /events accepte date/startTime/endTime et retourne les bons champs', async () => {
+    const event = {
+      EVEC_LIB: 'Test split',
+      date: '2025-07-10',
+      startTime: '14:00',
+      endTime: '16:00',
+      USEN_ID: userId,
+      ACCN_ID: accnId,
+    };
+    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
+    if ([201, 200].includes(res.status)) {
+      expect(res.body.DATE_START).toBe('2025-07-10');
+      expect(res.body.DATE_END).toBe('2025-07-10');
+      expect(res.body.START_TIME).toBe('14:00');
+      expect(res.body.END_TIME).toBe('16:00');
+      expect(res.body.DATE_START).toBe(res.body.DATE_END); // same day
+    }
+  });
+
+  it('PUT /events accepts a multi-day event', async () => {
+    const event = {
+      EVEC_LIB: 'Test multi-jours',
+      EVED_START: '2025-08-01T09:00:00Z',
+      EVED_END: '2025-08-03T18:00:00Z',
+      USEN_ID: userId,
+      ACCN_ID: accnId,
+    };
+    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
+    if ([201, 200].includes(res.status)) {
+      expect(res.body.DATE_START).toBe('2025-08-01');
+      expect(res.body.DATE_END).toBe('2025-08-03');
+      expect(res.body.DATE_START).not.toBe(res.body.DATE_END); // plusieurs jours
+    }
+  });
+
+  it('PUT /events refuse un payload incomplet', async () => {
+    const event = {
+      EVEC_LIB: 'Test erreur',
+      date: '2025-07-10',
+      startTime: '14:00',
+      USEN_ID: 102,
+      ACCN_ID: 102,
+    };
+    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
   });
