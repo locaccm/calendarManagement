@@ -24,36 +24,22 @@ jobs:
       - name: Install dependencies
         run: npm install  
 
-      - name: Create .env file
-        run: |
-          echo "DATABASE_URL=postgresql://fake:fake@localhost:5432/fake_db?schema=public" > .env
-          echo "NODE_ENV=test" >> .env
-          echo "CI=true" >> .env
-          echo "SKIP_DB_CONNECTION=true" >> .env
+      - name: Set Database URL
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
-      - name: Verify .env file creation
-        run: cat .env
-        
-      - name: Generate Prisma Client
-        run: npx prisma generate
+      - name: Verify DATABASE_URL
+        run: echo "DATABASE_URL is set to $DATABASE_URL"
 
       - name: Run tests with coverage
-        run: CI=true npm run test -- --coverage --coverageReporters=lcov
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run test -- --coverage --coverageReporters=lcov
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: |
-            -Dsonar.projectKey=calendarManagement
-            -Dsonar.sources=src
-            -Dsonar.exclusions=**/*.test.ts,**/*.spec.ts,**/tests/**
-            -Dsonar.tests=src/tests
-            -Dsonar.test.inclusions=**/*.test.ts,**/*.spec.ts
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.verbose=true
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   eslint:
     name: ESLint Check
