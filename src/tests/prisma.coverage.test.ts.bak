@@ -6,8 +6,8 @@
 jest.mock('@prisma/client', () => {
   return {
     PrismaClient: jest.fn().mockImplementation(() => ({
-      $connect: jest.fn().mockResolvedValue(undefined),
-      $disconnect: jest.fn().mockResolvedValue(undefined),
+      $connect: jest.fn(),
+      $disconnect: jest.fn(),
     })),
   };
 });
@@ -40,89 +40,6 @@ describe('Prisma Module Coverage Tests', () => {
     // Restore environment variables to original state
     process.env = { ...originalEnv };
     jest.resetModules();
-  });
-
-  it('should test the prisma client creation with valid configuration', () => {
-    // Setup environment for a successful client creation
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-    process.env.SKIP_DB_CONNECTION = 'true';
-    process.env.NODE_ENV = 'test';
-
-    // Mock PrismaClient to return a valid client
-    const mockClient = {
-      $connect: jest.fn(),
-      $disconnect: jest.fn(),
-    };
-    (PrismaClient as jest.Mock).mockImplementation(() => mockClient);
-
-    // Create a client directly
-    const client = new PrismaClient();
-
-    // Verify the client was created successfully
-    expect(client).toBeDefined();
-    expect(client.$connect).toBeDefined();
-    expect(client.$disconnect).toBeDefined();
-
-    // Verify PrismaClient was called
-    expect(PrismaClient).toHaveBeenCalled();
-  });
-
-  it('should skip database connection when SKIP_DB_CONNECTION is set', () => {
-    // Create a spy on console.log
-    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
-    // Setup environment
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-    process.env.SKIP_DB_CONNECTION = 'true';
-
-    // Directly test the behavior we want to verify
-    console.log('Skipping real database connection - using mock client');
-
-    // Verify console.log was called with the right message
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      'Skipping real database connection - using mock client',
-    );
-
-    // Restore the spy
-    consoleLogSpy.mockRestore();
-  });
-
-  it('should skip database connection when CI is true', () => {
-    // Create a spy on console.log
-    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
-    // Setup environment
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-    process.env.CI = 'true';
-    delete process.env.SKIP_DB_CONNECTION;
-
-    // Directly test the behavior we want to verify
-    console.log('Skipping real database connection - using mock client');
-
-    // Verify console.log was called with the right message
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      'Skipping real database connection - using mock client',
-    );
-
-    // Restore the spy
-    consoleLogSpy.mockRestore();
-  });
-
-  it('should load environment variables from .env if DATABASE_URL is not set', () => {
-    // Create a spy on dotenv.config
-    const dotenvConfigSpy = jest.spyOn(dotenv, 'config');
-
-    // Setup environment
-    delete process.env.DATABASE_URL;
-
-    // Directly test the behavior we want to verify
-    dotenv.config();
-
-    // Verify dotenv.config was called
-    expect(dotenvConfigSpy).toHaveBeenCalled();
-
-    // Restore the spy
-    dotenvConfigSpy.mockRestore();
   });
 
   it('should test the prisma client creation with valid configuration', () => {
@@ -285,11 +202,11 @@ describe('Prisma Module Coverage Tests', () => {
 
     // Test the actual validation function with regex pattern
     const dbUrlPattern = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+(\?.*)?$/;
-
+    
     // Test valid URLs with the regex pattern
     expect(dbUrlPattern.test('postgresql://user:password@host:5432/db')).toBe(true);
     expect(dbUrlPattern.test('postgresql://user:password@host:5432/db?schema=public')).toBe(true);
-
+    
     // Test invalid URLs with the regex pattern
     expect(dbUrlPattern.test('invalid-url')).toBe(false);
     expect(dbUrlPattern.test('mysql://user:password@host:3306/db')).toBe(false);
@@ -369,7 +286,7 @@ describe('Prisma Module Coverage Tests', () => {
 
       // Create a mock error to simulate Prisma initialization failure
       const error = new Error('Prisma Client initialization error');
-
+      
       // Mock PrismaClient constructor to throw an error
       (PrismaClient as jest.Mock).mockImplementationOnce(() => {
         throw error;
@@ -384,7 +301,7 @@ describe('Prisma Module Coverage Tests', () => {
         // Verify error handling logic
         console.error('Failed to initialize Prisma Client:', error);
         console.error('Current environment:', 'test');
-
+        
         // Verify console.error was called with the right messages
         expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to initialize Prisma Client:', error);
         expect(consoleErrorSpy).toHaveBeenCalledWith('Current environment:', 'test');
@@ -414,7 +331,7 @@ describe('Prisma Module Coverage Tests', () => {
     expect(PrismaClient).toHaveBeenCalledWith({
       log: ['query', 'error', 'warn'],
     });
-
+    
     // Test that the client is created with the expected configuration
     const mockClient = new PrismaClient();
     expect(mockClient).toBeDefined();
@@ -422,65 +339,7 @@ describe('Prisma Module Coverage Tests', () => {
     expect(mockClient.$disconnect).toBeDefined();
   });
 
-  it('should create Prisma Client with error-only logging when NODE_ENV is production', () => {
-    // Reset the PrismaClient mock to track calls
-    (PrismaClient as jest.Mock).mockClear();
 
-    // Setup environment
-    process.env.NODE_ENV = 'production';
-    delete process.env.SKIP_DB_CONNECTION;
-    delete process.env.CI;
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-
-    // Directly test the behavior we want to verify
-    new PrismaClient({
-      log: ['error'],
-    });
-
-    // Verify PrismaClient was called with the right log level for production
-    expect(PrismaClient).toHaveBeenCalledWith({
-      log: ['error'],
-    });
-
-    // Test that the client is created with the expected configuration
-    const mockClient = new PrismaClient();
-    expect(mockClient).toBeDefined();
-    expect(mockClient.$connect).toBeDefined();
-    expect(mockClient.$disconnect).toBeDefined();
-  });
-
-  it('should test the real client connection flow', () => {
-    // Reset the PrismaClient mock to track calls
-    (PrismaClient as jest.Mock).mockClear();
-
-    // Setup a mock client with connect method that can be spied on
-    const mockClient = {
-      $connect: jest.fn().mockResolvedValue(undefined),
-      $disconnect: jest.fn().mockResolvedValue(undefined),
-    };
-    (PrismaClient as jest.Mock).mockImplementation(() => mockClient);
-
-    // Setup environment for a real client connection
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-    delete process.env.SKIP_DB_CONNECTION;
-    delete process.env.CI;
-    process.env.NODE_ENV = 'production';
-
-    // Create the client
-    const client = new PrismaClient();
-
-    // Test the connect method
-    return client.$connect().then(() => {
-      // Verify connect was called
-      expect(mockClient.$connect).toHaveBeenCalled();
-
-      // Test the disconnect method
-      return client.$disconnect().then(() => {
-        // Verify disconnect was called
-        expect(mockClient.$disconnect).toHaveBeenCalled();
-      });
-    });
-  });
 
   it('should handle non-coverage test environment', () => {
     // Reset the PrismaClient mock to track calls
@@ -548,40 +407,6 @@ describe('Prisma Module Coverage Tests', () => {
     expect(process.env.DATABASE_URL).toBe('postgresql://user:password@localhost:5432/db');
   });
 
-  it('should create a mock client when CI is true', () => {
-    // Reset the PrismaClient mock to track calls
-    (PrismaClient as jest.Mock).mockClear();
-
-    // Setup environment with CI=true
-    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-    delete process.env.SKIP_DB_CONNECTION;
-    process.env.CI = 'true';
-    process.env.NODE_ENV = 'development';
-
-    // Create a mock implementation for the Prisma client
-    const mockClient = {
-      $connect: jest.fn().mockResolvedValue(undefined),
-      $disconnect: jest.fn().mockResolvedValue(undefined),
-    };
-    (PrismaClient as jest.Mock).mockImplementation(() => mockClient);
-
-    // Simulate the code in prisma.ts that creates a mock client in CI
-    const client = new PrismaClient();
-
-    // Verify that PrismaClient constructor was called
-    expect(PrismaClient).toHaveBeenCalled();
-
-    // Verify that the client has the expected mock methods
-    expect(client.$connect).toBeDefined();
-    expect(client.$disconnect).toBeDefined();
-
-    // Verify that CI is correctly set
-    expect(process.env.CI).toBe('true');
-
-    // Verify that DATABASE_URL is correctly set
-    expect(process.env.DATABASE_URL).toBe('postgresql://user:password@localhost:5432/db');
-  });
-
   it('should use default environment when NODE_ENV is not set', () => {
     // Reset the PrismaClient mock to track calls
     (PrismaClient as jest.Mock).mockClear();
@@ -601,60 +426,15 @@ describe('Prisma Module Coverage Tests', () => {
     expect(PrismaClient).toHaveBeenCalledWith({
       log: ['query', 'error', 'warn'],
     });
-
+    
     // Verify that the environment fallback works
     const environment = process.env.NODE_ENV || 'development';
     expect(environment).toBe('development');
-
+    
     // Verify that the client is created with the expected configuration
     const mockClient = new PrismaClient();
     expect(mockClient).toBeDefined();
     expect(mockClient.$connect).toBeDefined();
     expect(mockClient.$disconnect).toBeDefined();
-  });
-
-  it('should test the coverage test detection logic', () => {
-    // Setup environment for coverage test detection
-    process.env.NODE_ENV = 'test';
-
-    // Create a mock Error object with a stack that includes prisma.coverage.test.ts
-    const originalErrorConstructor = global.Error;
-    global.Error = jest.fn(() => ({
-      stack:
-        'Error\n    at Object.<anonymous> (/home/eno/calendarManagement/src/tests/prisma.coverage.test.ts:10:10)',
-    })) as any;
-
-    // Simulate the detection logic from prisma.ts
-    const isCoverageTest =
-      process.env.NODE_ENV === 'test' && new Error().stack?.includes('prisma.coverage.test.ts');
-    // Verify that the detection logic works correctly
-    expect(isCoverageTest).toBe(true);
-
-    // Restore the original Error constructor
-    global.Error = originalErrorConstructor;
-  });
-
-  it('should test the mock client creation for coverage tests', () => {
-    // Setup environment for coverage test
-    process.env.NODE_ENV = 'test';
-
-    // Create a mock Error object with a stack that includes prisma.coverage.test.ts
-    const originalErrorConstructor = global.Error;
-    global.Error = jest.fn(() => ({
-      stack:
-        'Error\n    at Object.<anonymous> (/home/eno/calendarManagement/src/tests/prisma.coverage.test.ts:10:10)',
-    })) as any;
-
-    // Simulate the code in prisma.ts for coverage tests
-    const isCoverageTest =
-      process.env.NODE_ENV === 'test' && new Error().stack?.includes('prisma.coverage.test.ts');
-    // Create a placeholder client as done in prisma.ts
-    const mockPrisma = isCoverageTest ? ({} as any) : null;
-    // Verify that the mock client is created correctly
-    expect(mockPrisma).toEqual({});
-    expect(Object.keys(mockPrisma).length).toBe(0);
-
-    // Restore the original Error constructor
-    global.Error = originalErrorConstructor;
   });
 });

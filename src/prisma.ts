@@ -5,8 +5,7 @@ import path from 'path';
 // Detect if we're being imported by the coverage test file
 // This is a special case where we need to allow the tests to mock our behavior
 const isCoverageTest =
-  process.env.NODE_ENV === 'test' &&
-  new Error().stack?.includes('prisma.coverage.test.ts');
+  process.env.NODE_ENV === 'test' && new Error().stack?.includes('prisma.coverage.test.ts');
 
 // Skip all actual logic if we're in a coverage test
 // The coverage tests will mock our behavior as needed

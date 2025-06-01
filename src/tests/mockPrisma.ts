@@ -5,8 +5,10 @@
  */
 
 import { jest } from '@jest/globals';
+import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended';
+import { PrismaClient } from '@prisma/client';
 
-// Mock event data
+// Mock data for tests with types that match Prisma schema
 const mockEvent = {
   EVEN_ID: 1,
   EVEC_LIB: 'Test Event',
@@ -22,117 +24,98 @@ const mockEvent = {
   EVEC_UPDATED_AT: new Date(),
 };
 
-// Mock user data
+// Ensure mockUser has all required fields from Prisma schema
 const mockUser = {
   USEN_ID: 1,
+  USEC_URLPP: null,
   USEC_LNAME: 'Test',
   USEC_FNAME: 'User',
+  USEC_TYPE: null,
+  USEC_BIO: null,
+  USED_BIRTH: null,
   USEC_MAIL: 'testuser@example.com',
   USEC_PASSWORD: 'hash',
+  USEC_PHONE: null,
+  USEC_TEL: null, // Champ manquant
+  USEC_ADDRESS: null, // Champ manquant
+  USEC_CREATED_AT: new Date(),
+  USEC_UPDATED_AT: new Date(),
+  USEN_INVITE: null,
 };
 
-// Mock accommodation data
+// Ensure mockAccommodation has all required fields from Prisma schema
 const mockAccommodation = {
+  USEN_ID: 1,
   ACCN_ID: 1,
   ACCC_NAME: 'Test Accommodation',
+  ACCC_TYPE: null,
+  ACCC_DESC: null,
   ACCC_ADDRESS: '1 Test Street',
-  owner: { USEN_ID: 1 },
+  ACCB_AVAILABLE: null,
 };
 
-// Type pour les fonctions mock
-type MockFunction = jest.Mock;
+// Type for the mock Prisma client
+export type MockPrismaClient = DeepMockProxy<PrismaClient>;
 
-// Types pour les données mock
-type MockEvent = typeof mockEvent;
-type MockUser = typeof mockUser;
-type MockAccommodation = typeof mockAccommodation;
-
-// Interface pour le client Prisma mock
-interface MockPrismaClient {
-  event: {
-    findUnique: MockFunction;
-    findFirst: MockFunction;
-    findMany: MockFunction;
-    create: MockFunction;
-    update: MockFunction;
-    delete: MockFunction;
-    deleteMany: MockFunction;
-    count: MockFunction;
-    upsert: MockFunction;
-  };
-  user: {
-    findUnique: MockFunction;
-    findFirst: MockFunction;
-    findMany: MockFunction;
-    create: MockFunction;
-    update: MockFunction;
-    delete: MockFunction;
-    upsert: MockFunction;
-  };
-  accommodation: {
-    findUnique: MockFunction;
-    findFirst: MockFunction;
-    findMany: MockFunction;
-    create: MockFunction;
-    update: MockFunction;
-    delete: MockFunction;
-    upsert: MockFunction;
-  };
-  $connect: MockFunction;
-  $disconnect: MockFunction;
-  $queryRaw: MockFunction;
-  $transaction: MockFunction;
-}
+// Create a singleton instance of the mock client
+const prisma = mockDeep<PrismaClient>();
 
 /**
- * Create a complete mock Prisma client
- * This includes all models and methods used in the application
+ * Configure default mock values for the Prisma client
+ * This sets up common return values for Prisma methods
  */
-export const createMockPrismaClient = (): MockPrismaClient => {
-  return {
-    event: {
-      findUnique: jest.fn().mockResolvedValue(mockEvent),
-      findFirst: jest.fn().mockResolvedValue(mockEvent),
-      findMany: jest.fn().mockResolvedValue([mockEvent]),
-      create: jest.fn().mockResolvedValue(mockEvent),
-      update: jest.fn().mockResolvedValue(mockEvent),
-      delete: jest.fn().mockResolvedValue(mockEvent),
-      deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
-      count: jest.fn().mockResolvedValue(1),
-      upsert: jest.fn().mockResolvedValue(mockEvent),
-    },
-    user: {
-      findUnique: jest.fn().mockResolvedValue(mockUser),
-      findFirst: jest.fn().mockResolvedValue(mockUser),
-      findMany: jest.fn().mockResolvedValue([mockUser]),
-      create: jest.fn().mockResolvedValue(mockUser),
-      update: jest.fn().mockResolvedValue(mockUser),
-      delete: jest.fn().mockResolvedValue(mockUser),
-      upsert: jest.fn().mockResolvedValue(mockUser),
-    },
-    accommodation: {
-      findUnique: jest.fn().mockResolvedValue(mockAccommodation),
-      findFirst: jest.fn().mockResolvedValue(mockAccommodation),
-      findMany: jest.fn().mockResolvedValue([mockAccommodation]),
-      create: jest.fn().mockResolvedValue(mockAccommodation),
-      update: jest.fn().mockResolvedValue(mockAccommodation),
-      delete: jest.fn().mockResolvedValue(mockAccommodation),
-      upsert: jest.fn().mockResolvedValue(mockAccommodation),
-    },
-    $connect: jest.fn().mockResolvedValue(undefined),
-    $disconnect: jest.fn().mockResolvedValue(undefined),
-    $queryRaw: jest.fn().mockResolvedValue([{ result: 'success' }]),
-    $transaction: jest.fn().mockImplementation((callback: any) => {
-      if (typeof callback === 'function') {
-        return Promise.resolve(callback(createMockPrismaClient()));
-      }
-      // Si c'est un tableau de promesses
-      if (Array.isArray(callback)) {
-        return Promise.all(callback);
-      }
-      return Promise.resolve([]);
-    }),
-  };
+export const configureMockDefaults = (mockClient: MockPrismaClient): void => {
+  // Event model mocks
+  mockClient.event.findUnique.mockResolvedValue(mockEvent);
+  mockClient.event.findFirst.mockResolvedValue(mockEvent);
+  mockClient.event.findMany.mockResolvedValue([mockEvent]);
+  mockClient.event.create.mockResolvedValue(mockEvent);
+  mockClient.event.update.mockResolvedValue(mockEvent);
+  mockClient.event.delete.mockResolvedValue(mockEvent);
+  mockClient.event.deleteMany.mockResolvedValue({ count: 1 });
+  mockClient.event.count.mockResolvedValue(1);
+  mockClient.event.upsert.mockResolvedValue(mockEvent);
+
+  // User model mocks
+  mockClient.user.findUnique.mockResolvedValue(mockUser);
+  mockClient.user.findFirst.mockResolvedValue(mockUser);
+  mockClient.user.findMany.mockResolvedValue([mockUser]);
+  mockClient.user.create.mockResolvedValue(mockUser);
+  mockClient.user.update.mockResolvedValue(mockUser);
+  mockClient.user.delete.mockResolvedValue(mockUser);
+  mockClient.user.upsert.mockResolvedValue(mockUser);
+
+  // Accommodation model mocks
+  mockClient.accommodation.findUnique.mockResolvedValue(mockAccommodation);
+  mockClient.accommodation.findFirst.mockResolvedValue(mockAccommodation);
+  mockClient.accommodation.findMany.mockResolvedValue([mockAccommodation]);
+  mockClient.accommodation.create.mockResolvedValue(mockAccommodation);
+  mockClient.accommodation.update.mockResolvedValue(mockAccommodation);
+  mockClient.accommodation.delete.mockResolvedValue(mockAccommodation);
+  mockClient.accommodation.upsert.mockResolvedValue(mockAccommodation);
+
+  // Global Prisma methods
+  mockClient.$connect.mockResolvedValue();
+  mockClient.$disconnect.mockResolvedValue();
+  mockClient.$queryRaw.mockResolvedValue([{ result: 'success' }]);
+  mockClient.$transaction.mockImplementation((callback) => {
+    if (typeof callback === 'function') {
+      return Promise.resolve(callback(mockClient));
+    }
+    if (Array.isArray(callback)) {
+      return Promise.all(callback);
+    }
+    return Promise.resolve([]);
+  });
+};
+
+/**
+ * Get the mock Prisma client instance
+ * This returns the singleton mock client with default configurations
+ */
+export const getMockPrismaClient = (): MockPrismaClient => {
+  configureMockDefaults(prisma);
+  return prisma;
 };
 
 /**
@@ -140,7 +123,7 @@ export const createMockPrismaClient = (): MockPrismaClient => {
  * This should be called before importing any modules that use Prisma
  */
 export const setupPrismaMocks = (): MockPrismaClient => {
-  const mockPrismaClient = createMockPrismaClient();
+  const mockPrismaClient = getMockPrismaClient();
 
   jest.mock('@prisma/client', () => ({
     PrismaClient: jest.fn().mockImplementation(() => mockPrismaClient),
@@ -156,13 +139,6 @@ export const setupPrismaMocks = (): MockPrismaClient => {
  * This should be called after each test to ensure clean state
  */
 export const resetPrismaMocks = (mockClient: MockPrismaClient): void => {
-  Object.values(mockClient).forEach((model: any) => {
-    if (model && typeof model === 'object') {
-      Object.values(model).forEach((method: any) => {
-        if (typeof method === 'function' && method.mockClear) {
-          method.mockClear();
-        }
-      });
-    }
-  });
+  mockReset(mockClient);
+  configureMockDefaults(mockClient);
 };

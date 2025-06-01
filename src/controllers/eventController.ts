@@ -25,17 +25,17 @@ export function sanitizeEvent(prismaEvent: any): Event {
     if (startVal === null || startVal === undefined || endVal === null || endVal === undefined) {
       return { EVED_START: '', EVED_END: '' };
     }
-    
+
     // Convert to Date objects if they aren't already
     const dStart = startVal instanceof Date ? startVal : new Date(startVal);
     const dEnd = endVal instanceof Date ? endVal : new Date(endVal);
-    
+
     // Validate that both dates are valid
     if (isNaN(dStart.getTime()) || isNaN(dEnd.getTime())) {
       console.warn('Invalid date detected in formatDateFields:', { startVal, endVal });
       return { EVED_START: '', EVED_END: '' };
     }
-    
+
     // For tests, we must always return dates in ISO format
     return {
       EVED_START: dStart.toISOString(),

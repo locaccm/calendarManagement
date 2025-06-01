@@ -3,7 +3,7 @@ import { GenericContainer, StartedTestContainer } from 'testcontainers';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
-import { createMockPrismaClient, setupPrismaMocks, resetPrismaMocks } from './mockPrisma';
+import { getMockPrismaClient, setupPrismaMocks, resetPrismaMocks } from './mockPrisma';
 import dotenv from 'dotenv';
 
 const execAsync = promisify(exec);
@@ -22,7 +22,7 @@ async function setupTestDatabase() {
   if (isCI) {
     console.log('Running in CI environment - using mock Prisma client');
     // Use our centralized mock Prisma client implementation
-    prisma = createMockPrismaClient();
+    prisma = getMockPrismaClient();
     // Set a fake DATABASE_URL for tests that check for its existence
     process.env.DATABASE_URL = 'postgresql://fake:fake@localhost:5432/fake_db?schema=public';
     return prisma;
@@ -66,7 +66,7 @@ async function setupTestDatabase() {
 function setupMockPrisma() {
   console.log('Using mock Prisma client as fallback');
   // Use our centralized mock Prisma client implementation
-  prisma = createMockPrismaClient();
+  prisma = getMockPrismaClient();
   return prisma;
 }
 
