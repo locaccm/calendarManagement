@@ -10,7 +10,14 @@ describe('normalizeRequestDates', () => {
   });
 
   it('handles extended format (dateStart/dateEnd)', () => {
-    const req = { body: { dateStart: '2025-06-01', startTime: '10:00', dateEnd: '2025-06-02', endTime: '12:00' } };
+    const req = {
+      body: {
+        dateStart: '2025-06-01',
+        startTime: '10:00',
+        dateEnd: '2025-06-02',
+        endTime: '12:00',
+      },
+    };
     const result = normalizeRequestDates(req as any);
     expect(result.EVED_START).toBe('2025-06-01T10:00:00.000Z');
     expect(result.EVED_END).toBe('2025-06-02T12:00:00.000Z');
@@ -32,7 +39,14 @@ describe('normalizeRequestDates', () => {
   });
 
   it('handles standard split format (DATE_START, START_TIME, DATE_END, END_TIME)', () => {
-    const req = { body: { DATE_START: '2025-06-01', START_TIME: '10:00', DATE_END: '2025-06-02', END_TIME: '12:00' } };
+    const req = {
+      body: {
+        DATE_START: '2025-06-01',
+        START_TIME: '10:00',
+        DATE_END: '2025-06-02',
+        END_TIME: '12:00',
+      },
+    };
     const result = normalizeRequestDates(req as any);
     expect(result.EVED_START).toBe('2025-06-01T10:00:00.000Z');
     expect(result.EVED_END).toBe('2025-06-02T12:00:00.000Z');
@@ -40,7 +54,10 @@ describe('normalizeRequestDates', () => {
 
   it('returns undefined for missing fields', () => {
     const req = { body: {} };
-    expect(normalizeRequestDates(req as any)).toEqual({ EVED_START: undefined, EVED_END: undefined });
+    expect(normalizeRequestDates(req as any)).toEqual({
+      EVED_START: undefined,
+      EVED_END: undefined,
+    });
   });
 
   it('handles partial data (only start)', () => {

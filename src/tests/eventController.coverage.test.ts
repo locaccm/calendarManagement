@@ -67,7 +67,7 @@ describe('Event Controller Unit Tests', () => {
       await createEvent(mockRequest as Request, mockResponse as Response);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: 'Validation error' })
+        expect.objectContaining({ error: 'Validation error' }),
       );
     });
 
@@ -76,7 +76,7 @@ describe('Event Controller Unit Tests', () => {
       await createEvent(mockRequest as Request, mockResponse as Response);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: 'Validation error' })
+        expect.objectContaining({ error: 'Validation error' }),
       );
     });
 
@@ -100,12 +100,18 @@ describe('Event Controller Unit Tests', () => {
 
     it('should return 404 if event does not exist on updateEvent', async () => {
       mockRequest.params = { id: '999' };
-      mockRequest.body = { EVEC_LIB: 'Test', USEN_ID: 1, ACCN_ID: 1, EVED_START: '2025-01-01T10:00:00Z', EVED_END: '2025-01-01T12:00:00Z' };
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        EVED_START: '2025-01-01T10:00:00Z',
+        EVED_END: '2025-01-01T12:00:00Z',
+      };
       prismaClientMock.event.findUnique.mockResolvedValue(null);
       await updateEvent(mockRequest as Request, mockResponse as Response);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: 'Event not found.' })
+        expect.objectContaining({ error: 'Event not found.' }),
       );
     });
 
@@ -115,7 +121,7 @@ describe('Event Controller Unit Tests', () => {
       await deleteEvent(mockRequest as Request, mockResponse as Response);
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: 'Event not found.' })
+        expect.objectContaining({ error: 'Event not found.' }),
       );
     });
 
@@ -126,7 +132,7 @@ describe('Event Controller Unit Tests', () => {
       await updateEvent(mockRequest as Request, mockResponse as Response);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({ error: 'Validation error' })
+        expect.objectContaining({ error: 'Validation error' }),
       );
     });
 

@@ -287,5 +287,4 @@ describe('Date Utils', () => {
       expect(() => enrichEventWithDateTimeParts(event, true)).toThrow(RangeError);
     });
   });
-
 });

@@ -21,7 +21,7 @@ describe('Error Handler Middleware', () => {
     const error = {
       status: 400,
       message: 'Bad Request',
-      details: { field: 'name', issue: 'required' }
+      details: { field: 'name', issue: 'required' },
     };
 
     // Act
@@ -31,14 +31,14 @@ describe('Error Handler Middleware', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(400);
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: 'Bad Request',
-      details: { field: 'name', issue: 'required' }
+      details: { field: 'name', issue: 'required' },
     });
   });
 
   test('should use default status 500 when not provided', () => {
     // Arrange
     const error = {
-      message: 'Some error occurred'
+      message: 'Some error occurred',
     };
 
     // Act
@@ -48,14 +48,14 @@ describe('Error Handler Middleware', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: 'Some error occurred',
-      details: undefined
+      details: undefined,
     });
   });
 
   test('should use default message when not provided', () => {
     // Arrange
     const error = {
-      status: 500
+      status: 500,
     };
 
     // Act
@@ -65,7 +65,7 @@ describe('Error Handler Middleware', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(500);
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: 'Internal Server Error',
-      details: undefined
+      details: undefined,
     });
   });
 

@@ -10,7 +10,7 @@ describe('Validation Middleware', () => {
   beforeEach(() => {
     mockRequest = {
       body: {},
-      query: {}
+      query: {},
     };
     mockResponse = {
       status: jest.fn().mockReturnThis(),
@@ -22,14 +22,14 @@ describe('Validation Middleware', () => {
   describe('validateBody', () => {
     const testSchema = z.object({
       name: z.string().min(1, 'Name is required'),
-      age: z.number().min(18, 'Must be at least 18 years old')
+      age: z.number().min(18, 'Must be at least 18 years old'),
     });
 
     test('should pass validation with valid data', () => {
       // Arrange
       mockRequest.body = {
         name: 'John Doe',
-        age: 25
+        age: 25,
       };
       const middleware = validateBody(testSchema);
 
@@ -45,7 +45,7 @@ describe('Validation Middleware', () => {
       // Arrange
       mockRequest.body = {
         name: '',
-        age: 15
+        age: 15,
       };
       const middleware = validateBody(testSchema);
 
@@ -57,8 +57,8 @@ describe('Validation Middleware', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: 'Validation error',
-          details: expect.any(Array)
-        })
+          details: expect.any(Array),
+        }),
       );
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -75,8 +75,8 @@ describe('Validation Middleware', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'Validation error'
-        })
+          error: 'Validation error',
+        }),
       );
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -85,14 +85,14 @@ describe('Validation Middleware', () => {
   describe('validateQuery', () => {
     const querySchema = z.object({
       page: z.string().regex(/^\d+$/).transform(Number).optional(),
-      limit: z.string().regex(/^\d+$/).transform(Number).optional()
+      limit: z.string().regex(/^\d+$/).transform(Number).optional(),
     });
 
     test('should pass validation with valid query params', () => {
       // Arrange
       mockRequest.query = {
         page: '1',
-        limit: '10'
+        limit: '10',
       };
       const middleware = validateQuery(querySchema);
 
@@ -103,7 +103,7 @@ describe('Validation Middleware', () => {
       expect(nextFunction).toHaveBeenCalled();
       expect(mockRequest.query).toEqual({
         page: 1,
-        limit: 10
+        limit: 10,
       });
     });
 
@@ -111,7 +111,7 @@ describe('Validation Middleware', () => {
       // Arrange
       mockRequest.query = {
         page: 'abc',
-        limit: '10'
+        limit: '10',
       };
       const middleware = validateQuery(querySchema);
 
@@ -122,8 +122,8 @@ describe('Validation Middleware', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: 'Validation error'
-        })
+          error: 'Validation error',
+        }),
       );
       expect(nextFunction).not.toHaveBeenCalled();
     });

@@ -1,8 +1,8 @@
-import { 
-  eventCreateSchema, 
-  eventUpdateSchema, 
+import {
+  eventCreateSchema,
+  eventUpdateSchema,
   eventIdParamSchema,
-  eventFilterQuerySchema
+  eventFilterQuerySchema,
 } from '../validation/eventSchemas';
 
 describe('Event Validation Schemas', () => {
@@ -14,7 +14,7 @@ describe('Event Validation Schemas', () => {
         EVED_START: '2023-01-01T10:00:00Z',
         EVED_END: '2023-01-01T12:00:00Z',
         USEN_ID: 1,
-        ACCN_ID: 2
+        ACCN_ID: 2,
       };
 
       // Act
@@ -32,7 +32,7 @@ describe('Event Validation Schemas', () => {
         startTime: '10:00',
         endTime: '12:00',
         USEN_ID: 1,
-        ACCN_ID: 2
+        ACCN_ID: 2,
       };
 
       // Act
@@ -47,7 +47,7 @@ describe('Event Validation Schemas', () => {
       const invalidEvent = {
         EVEC_LIB: 'Test Event',
         USEN_ID: 1,
-        ACCN_ID: 2
+        ACCN_ID: 2,
       };
 
       // Act
@@ -56,7 +56,9 @@ describe('Event Validation Schemas', () => {
       // Assert
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Il faut fournir soit EVED_START/EVED_END, soit date/startTime/endTime');
+        expect(result.error.errors[0].message).toContain(
+          'Il faut fournir soit EVED_START/EVED_END, soit date/startTime/endTime',
+        );
       }
     });
 
@@ -68,7 +70,7 @@ describe('Event Validation Schemas', () => {
         startTime: '10:00',
         endTime: '12:00',
         USEN_ID: 1,
-        ACCN_ID: 2
+        ACCN_ID: 2,
       };
 
       // Act
@@ -97,7 +99,7 @@ describe('Event Validation Schemas', () => {
     test('should validate a partial update with only some fields', () => {
       // Arrange
       const validUpdate = {
-        EVEC_LIB: 'Updated Event'
+        EVEC_LIB: 'Updated Event',
       };
 
       // Act
@@ -121,8 +123,8 @@ describe('Event Validation Schemas', () => {
     test('should reject update with invalid field values', () => {
       // Arrange
       const invalidUpdate = {
-        EVEC_LIB: '',  // Empty string not allowed
-        USEN_ID: 'not-a-number'
+        EVEC_LIB: '', // Empty string not allowed
+        USEN_ID: 'not-a-number',
       };
 
       // Act
@@ -164,7 +166,7 @@ describe('Event Validation Schemas', () => {
         usager: '1',
         logement: '2',
         dateStart: '2023-01-01',
-        dateEnd: '2023-01-31'
+        dateEnd: '2023-01-31',
       };
 
       // Act
@@ -177,7 +179,7 @@ describe('Event Validation Schemas', () => {
           usager: 1,
           logement: 2,
           dateStart: '2023-01-01',
-          dateEnd: '2023-01-31'
+          dateEnd: '2023-01-31',
         });
       }
     });
@@ -196,7 +198,7 @@ describe('Event Validation Schemas', () => {
     test('should reject invalid usager param', () => {
       // Arrange
       const invalidQuery = {
-        usager: 'abc'
+        usager: 'abc',
       };
 
       // Act
@@ -209,7 +211,7 @@ describe('Event Validation Schemas', () => {
     test('should reject invalid logement param', () => {
       // Arrange
       const invalidQuery = {
-        logement: 'abc'
+        logement: 'abc',
       };
 
       // Act

@@ -47,7 +47,9 @@ describe('Authentication Middleware', () => {
 
     // Assert
     expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Not authenticated (missing headers)' });
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: 'Not authenticated (missing headers)',
+    });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 
@@ -63,7 +65,9 @@ describe('Authentication Middleware', () => {
 
     // Assert
     expect(mockResponse.status).toHaveBeenCalledWith(401);
-    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Not authenticated (missing headers)' });
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: 'Not authenticated (missing headers)',
+    });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 });

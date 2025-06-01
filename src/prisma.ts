@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 // Detect if we're being imported by the coverage test file
 // This is a special case where we need to allow the tests to mock our behavior
 const isCoverageTest =

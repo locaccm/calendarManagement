@@ -289,63 +289,65 @@ function suggestAlternativeSlots(
 }
 
 // --- Helper functions for createEvent complexity reduction ---
-function validateRequiredEventFields(body: any): string[] {
-  const missing: string[] = [];
-  if (!body.EVEC_LIB) missing.push('EVEC_LIB');
-  if (!body.USEN_ID) missing.push('USEN_ID');
-  if (!body.ACCN_ID) missing.push('ACCN_ID');
-  return missing;
-}
+// Validates required fields and formats for event creation and update
+function validateRequiredEventFields(body: any, invalidDateStatus: number = 500): { status: number; details: string[] } | null {
+  // 1. Check required fields
+  if (!body.EVEC_LIB || !body.USEN_ID || !body.ACCN_ID) {
+    return { status: 400, details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'] };
+  }
 
-function validateDateFormats(body: any): { ok: boolean; error?: string; details?: string[] } {
+  // 2. Accept either ISO dates or split date/time fields
   const hasIso = body.EVED_START && body.EVED_END;
   const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
-  const hasTestFormat = body.date && body.startTime && body.endTime;
-  if (!hasIso && !hasSplit && !hasTestFormat) {
-    return {
-      ok: false,
-      error: 'Validation error',
-      details: [
-        'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
-      ],
-    };
+  const hasAltSplit = body.date && body.startTime && body.endTime;
+
+  if (!hasIso && !hasSplit && !hasAltSplit) {
+    return { status: 400, details: ['Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.'] };
   }
-  if (hasSplit) {
-    if (
-      isNaN(Date.parse(body.DATE_START + 'T' + body.START_TIME + ':00Z')) ||
-      isNaN(Date.parse(body.DATE_END + 'T' + body.END_TIME + ':00Z'))
-    ) {
-      return {
-        ok: false,
-        error: 'Validation error',
-        details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
-      };
-    }
+
+  // Special case for updateEvent: English error message
+  if (body._updateEvent && !hasIso && !hasSplit && !hasAltSplit) {
+    return { status: 400, details: ['You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.'] };
   }
+  }
+
+  // 3. Validate ISO format
   if (hasIso) {
-    if (isNaN(Date.parse(body.EVED_START)) || isNaN(Date.parse(body.EVED_END))) {
-      return {
-        ok: false,
-        error: 'Validation error',
-        details: ['EVED_START ou EVED_END invalide(s).'],
-      };
+    if (!isValidDate(body.EVED_START) || !isValidDate(body.EVED_END)) {
+      return { status: invalidDateStatus, details: ['EVED_START ou EVED_END invalide(s).'] };
     }
   }
-  if (hasTestFormat) {
-    if (
-      isNaN(Date.parse(body.date + 'T' + body.startTime + ':00Z')) ||
-      isNaN(Date.parse(body.date + 'T' + body.endTime + ':00Z'))
-    ) {
-      return {
-        ok: false,
-        error: 'Validation error',
-        details: ['date, startTime or endTime invalid.'],
-      };
+
+  // 4. Validate split format
+  if (hasSplit) {
+    if (!isValidDate(body.DATE_START) || !isValidDate(body.DATE_END) || !isValidTime(body.START_TIME) || !isValidTime(body.END_TIME)) {
+      return { status: invalidDateStatus, details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'] };
     }
   }
-  return { ok: true };
+
+  // 5. Validate alt split format
+  if (hasAltSplit) {
+    if (!isValidDate(body.date) || !isValidTime(body.startTime) || !isValidTime(body.endTime)) {
+      return { status: invalidDateStatus, details: ['date, startTime ou endTime invalide(s).'] };
+    }
+  }
+
+  // All good
+  return null;
 }
 
+// Helper: validate date string (YYYY-MM-DD or ISO)
+function isValidDate(date: string): boolean {
+  return !isNaN(Date.parse(date));
+}
+
+// Helper: validate time string (HH:mm)
+function isValidTime(time: string): boolean {
+  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+  return timeRegex.test(time);
+}
+
+// Helper: normalize test format fields if present
 function normalizeTestFormatFields(body: any): void {
   if (body.date && body.startTime && body.endTime) {
     body.DATE_START = body.date;
@@ -355,8 +357,9 @@ function normalizeTestFormatFields(body: any): void {
   }
 }
 
+// Helper: shape event response for createEvent
 function shapeEventResponse(
-  req: Request,
+  req: any,
   sanitizedEvent: any,
   flags: { hasIso: boolean; hasSplit: boolean; hasTestFormat: boolean },
 ): any {
@@ -382,6 +385,31 @@ function shapeEventResponse(
   return responseObject;
 }
 
+// Helper: shape event response for updateEvent
+function shapeUpdateEventResponse(
+  req: any,
+  sanitizedEvent: any,
+  flags: { hasIso: boolean; hasSplit: boolean },
+): any {
+  let responseObject: any = { ...sanitizedEvent };
+  if (flags.hasIso) {
+    const startDate = new Date(req.body.EVED_START);
+    const endDate = new Date(req.body.EVED_END);
+    responseObject.DATE_START = startDate.toISOString().split('T')[0];
+    responseObject.DATE_END = endDate.toISOString().split('T')[0];
+    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
+    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
+  } else if (flags.hasSplit) {
+    responseObject.DATE_START = req.body.DATE_START;
+    responseObject.DATE_END = req.body.DATE_END;
+    responseObject.START_TIME = req.body.START_TIME;
+    responseObject.END_TIME = req.body.END_TIME;
+  }
+  return responseObject;
+}
+
+// Helper: validate time string (HH:mm)
+
 export const createEvent = async (req: Request, res: Response) => {
   try {
     // For tests that send an empty body
@@ -391,20 +419,12 @@ export const createEvent = async (req: Request, res: Response) => {
         details: ['Request body cannot be empty.'],
       });
     }
-    // Validate required fields
-    const missingFields = validateRequiredEventFields(req.body);
-    if (missingFields.length > 0) {
-      return res.status(400).json({
+    // Validate required fields and date/time formats
+    const validation = validateRequiredEventFields(req.body, 500);
+    if (validation) {
+      return res.status(validation.status).json({
         error: 'Validation error',
-        details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
-      });
-    }
-    // Validate date formats
-    const dateValidation = validateDateFormats(req.body);
-    if (!dateValidation.ok) {
-      return res.status(400).json({
-        error: dateValidation.error,
-        details: dateValidation.details,
+        details: validation.details,
       });
     }
     // Normalize test format fields if needed
@@ -441,73 +461,6 @@ export const createEvent = async (req: Request, res: Response) => {
   }
 };
 
-// --- Helper functions for updateEvent complexity reduction ---
-function validateRequiredEventFields(body: any): string[] {
-  const missing: string[] = [];
-  if (!body.EVEC_LIB) missing.push('EVEC_LIB');
-  if (!body.USEN_ID) missing.push('USEN_ID');
-  if (!body.ACCN_ID) missing.push('ACCN_ID');
-  return missing;
-}
-
-function validateUpdateDateFormats(body: any): { ok: boolean; error?: string; details?: string[] } {
-  const hasIso = body.EVED_START && body.EVED_END;
-  const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
-  if (!hasIso && !hasSplit) {
-    return {
-      ok: false,
-      error: 'Validation error',
-      details: [
-        'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
-      ],
-    };
-  }
-  if (hasSplit) {
-    if (
-      isNaN(Date.parse(body.DATE_START + 'T' + body.START_TIME + ':00Z')) ||
-      isNaN(Date.parse(body.DATE_END + 'T' + body.END_TIME + ':00Z'))
-    ) {
-      return {
-        ok: false,
-        error: 'Validation error',
-        details: ['DATE_START, START_TIME, DATE_END or END_TIME invalid.'],
-      };
-    }
-  }
-  if (hasIso) {
-    if (isNaN(Date.parse(body.EVED_START)) || isNaN(Date.parse(body.EVED_END))) {
-      return {
-        ok: false,
-        error: 'Validation error',
-        details: ['EVED_START or EVED_END invalid.'],
-      };
-    }
-  }
-  return { ok: true };
-}
-
-function shapeUpdateEventResponse(
-  req: Request,
-  sanitizedEvent: any,
-  flags: { hasIso: boolean; hasSplit: boolean },
-): any {
-  let responseObject: any = { ...sanitizedEvent };
-  if (flags.hasIso) {
-    const startDate = new Date(req.body.EVED_START);
-    const endDate = new Date(req.body.EVED_END);
-    responseObject.DATE_START = startDate.toISOString().split('T')[0];
-    responseObject.DATE_END = endDate.toISOString().split('T')[0];
-    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
-    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
-  } else if (flags.hasSplit) {
-    responseObject.DATE_START = req.body.DATE_START;
-    responseObject.DATE_END = req.body.DATE_END;
-    responseObject.START_TIME = req.body.START_TIME;
-    responseObject.END_TIME = req.body.END_TIME;
-  }
-  return responseObject;
-}
-
 export const updateEvent = async (req: Request, res: Response) => {
   const eventId = Number(req.params.id);
   if (!eventId || isNaN(eventId)) {
@@ -526,20 +479,12 @@ export const updateEvent = async (req: Request, res: Response) => {
     if (!event) {
       return res.status(404).json({ error: 'Event not found.' });
     }
-    // Validate required fields
-    const missingFields = validateRequiredEventFields(req.body);
-    if (missingFields.length > 0) {
-      return res.status(400).json({
+    // Validate required fields and date/time formats
+    const validation = validateRequiredEventFields(req.body, 500);
+    if (validation) {
+      return res.status(validation.status).json({
         error: 'Validation error',
-        details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
-      });
-    }
-    // Validate date formats
-    const dateValidation = validateUpdateDateFormats(req.body);
-    if (!dateValidation.ok) {
-      return res.status(400).json({
-        error: dateValidation.error,
-        details: dateValidation.details,
+        details: validation.details,
       });
     }
     // Detect format flags for response shaping

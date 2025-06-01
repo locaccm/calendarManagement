@@ -1,5 +1,3 @@
-
-
 /**
  * Convertit une date en UTC
  * @param dateInput - Date or string representing a date

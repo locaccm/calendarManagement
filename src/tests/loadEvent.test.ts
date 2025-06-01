@@ -31,7 +31,7 @@ describe('LoadEvent Middleware', () => {
       json: jest.fn().mockReturnThis(),
     };
     nextFunction = jest.fn();
-    
+
     // Reset mocks
     jest.clearAllMocks();
   });
