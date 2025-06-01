@@ -2,21 +2,21 @@ import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity({ name: 'EVENT' })
 export class Event {
-  @PrimaryGeneratedColumn({ name: 'EVEN_ID' })
+  @PrimaryGeneratedColumn({ name: 'even_id' })
   EVEN_ID!: number;
 
-  @Column({ name: 'EVEC_LIB', type: 'varchar', length: 255 })
+  @Column({ name: 'evec_lib', type: 'varchar', length: 255 })
   EVEC_LIB!: string;
 
-  @Column({ name: 'EVED_START', type: 'date' })
+  @Column({ name: 'eved_start', type: 'date' })
   EVED_START!: string;
 
-  @Column({ name: 'EVED_END', type: 'date' })
+  @Column({ name: 'eved_end', type: 'date' })
   EVED_END!: string;
 
-  @Column({ name: 'USEN_ID', type: 'int' })
+  @Column({ name: 'usen_id', type: 'int' })
   USEN_ID!: number;
 
-  @Column({ name: 'ACCN_ID', type: 'int' })
+  @Column({ name: 'accn_id', type: 'int' })
   ACCN_ID!: number;
 }
