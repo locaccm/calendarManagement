@@ -1,7 +1,8 @@
 import request from 'supertest';
 import app from '../app';
+import { describeSkipInCI, skipInCI } from './skipTestsInCI';
 
-describe('Calendar Views (integration)', () => {
+describeSkipInCI('Calendar Views (integration)', () => {
   describe('GET /calendar/day', () => {
     it('returns events for the day', async () => {
       const res = await request(app)

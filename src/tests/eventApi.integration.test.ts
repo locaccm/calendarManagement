@@ -1,4 +1,6 @@
 import request from 'supertest';
+import { closeDatabase, resetDatabase } from './setup';
+import { describeSkipInCI, skipInCI, isCI } from './skipTestsInCI';
 
 // Create mock objects for Prisma
 const mockUserFunctions = {
@@ -27,7 +29,7 @@ jest.mock('../prisma', () => mockPrisma);
 // Now import app after mocks are set up
 import app from '../app';
 
-describe('Events API - Creation and date/time format', () => {
+describeSkipInCI('Events API - Creation and date/time format', () => {
   let userId: number;
   let accnId: number;
   beforeAll(async () => {

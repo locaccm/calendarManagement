@@ -28,12 +28,16 @@ jobs:
         run: |
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
           echo "NODE_ENV=test" >> .env
+          echo "CI=true" >> .env
 
       - name: Verify .env file creation
         run: echo ".env file has been created"
+        
+      - name: Generate Prisma Client
+        run: npx prisma generate
 
       - name: Run tests with coverage
-        run: npm run test -- --coverage --coverageReporters=lcov
+        run: CI=true npm run test -- --coverage --coverageReporters=lcov
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4

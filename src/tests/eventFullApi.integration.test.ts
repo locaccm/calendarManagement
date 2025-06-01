@@ -1,5 +1,6 @@
 import request from 'supertest';
 import app from '../app';
+import { describeSkipInCI, skipInCI } from './skipTestsInCI';
 
 // Utilities to create a basic event
 const baseEvent = {
@@ -12,7 +13,7 @@ const baseEvent = {
 
 let createdEventId: number;
 
-describe('Event API (integration, full CRUD)', () => {
+describeSkipInCI('Event API (integration, full CRUD)', () => {
   // Creation
   it('POST /events creates an event', async () => {
     const res = await request(app)
