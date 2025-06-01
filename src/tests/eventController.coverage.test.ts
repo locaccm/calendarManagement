@@ -60,6 +60,97 @@ describe('Event Controller Unit Tests', () => {
     });
   });
 
+  // --- Ajout de tests de couverture pour les validations et erreurs ---
+  describe('Validation and error handling', () => {
+    it('should return 400 if required fields are missing on createEvent', async () => {
+      mockRequest.body = { EVEC_LIB: '', USEN_ID: null, ACCN_ID: null };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' })
+      );
+    });
+
+    it('should return 400 if date fields are missing on createEvent', async () => {
+      mockRequest.body = { EVEC_LIB: 'Test', USEN_ID: 1, ACCN_ID: 1 };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' })
+      );
+    });
+
+    it('should return 500 if date fields are invalid on createEvent', async () => {
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        DATE_START: 'invalid',
+        START_TIME: 'invalid',
+        DATE_END: 'invalid',
+        END_TIME: 'invalid',
+      };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      // Optionally check for error object
+      // expect(mockResponse.json).toHaveBeenCalledWith(
+      //   expect.objectContaining({ error: expect.any(String) })
+      // );
+    });
+
+    it('should return 404 if event does not exist on updateEvent', async () => {
+      mockRequest.params = { id: '999' };
+      mockRequest.body = { EVEC_LIB: 'Test', USEN_ID: 1, ACCN_ID: 1, EVED_START: '2025-01-01T10:00:00Z', EVED_END: '2025-01-01T12:00:00Z' };
+      prismaClientMock.event.findUnique.mockResolvedValue(null);
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Event not found.' })
+      );
+    });
+
+    it('should return 404 if event does not exist on deleteEvent', async () => {
+      mockRequest.params = { id: '999' };
+      prismaClientMock.event.findUnique.mockResolvedValue(null);
+      await deleteEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Event not found.' })
+      );
+    });
+
+    it('should return 400 if updateEvent is called with missing required fields', async () => {
+      mockRequest.params = { id: '1' };
+      mockRequest.body = { EVEC_LIB: '', USEN_ID: null, ACCN_ID: null };
+      prismaClientMock.event.findUnique.mockResolvedValue({ EVEN_ID: 1 });
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' })
+      );
+    });
+
+    it('should return 500 if updateEvent is called with invalid date fields', async () => {
+      mockRequest.params = { id: '1' };
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        DATE_START: 'invalid',
+        START_TIME: 'invalid',
+        DATE_END: 'invalid',
+        END_TIME: 'invalid',
+      };
+      prismaClientMock.event.findUnique.mockResolvedValue({ EVEN_ID: 1 });
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      // Optionally check for error object
+      // expect(mockResponse.json).toHaveBeenCalledWith(
+      //   expect.objectContaining({ error: expect.any(String) })
+      // );
+    });
+  });
+
   describe('sanitizeEvent', () => {
     it('should handle null date values', () => {
       const prismaEvent = {

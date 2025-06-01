@@ -3,6 +3,10 @@ import {
   enrichEventWithDateTimeParts,
   extractDatePart,
   extractTimePart,
+  toUTCDate,
+  getUTCStartOfDay,
+  getUTCEndOfDay,
+  isValidUTCDate,
 } from '../utils/dateUtils';
 
 describe('Date Utils', () => {
@@ -203,4 +207,85 @@ describe('Date Utils', () => {
       }); // Forced enrichment
     });
   });
+
+  // --- Additional coverage & edge case tests ---
+  describe('toUTCDate', () => {
+    it('should convert a Date object to UTC Date', () => {
+      const localDate = new Date('2025-05-15T10:30:00-05:00');
+      const utcDate = toUTCDate(localDate);
+      expect(utcDate).toBeInstanceOf(Date);
+      expect(utcDate.toISOString()).toBe(localDate.toISOString());
+    });
+    it('should convert an ISO string to UTC Date', () => {
+      const isoStr = '2025-05-15T10:30:00Z';
+      const utcDate = toUTCDate(isoStr);
+      expect(utcDate).toBeInstanceOf(Date);
+      expect(utcDate.toISOString()).toBe('2025-05-15T10:30:00.000Z');
+    });
+    it('should throw for invalid input', () => {
+      const invalid = 'not-a-date';
+      expect(() => toUTCDate(invalid)).toThrow(RangeError);
+    });
+  });
+
+  describe('getUTCStartOfDay', () => {
+    it('should return the start of the given day in UTC', () => {
+      const date = getUTCStartOfDay(2025, 5, 15);
+      expect(date).toBeInstanceOf(Date);
+      expect(date.toISOString()).toBe('2025-05-15T00:00:00.000Z');
+    });
+    it('should handle leap years', () => {
+      const date = getUTCStartOfDay(2024, 2, 29);
+      expect(date.toISOString()).toBe('2024-02-29T00:00:00.000Z');
+    });
+  });
+
+  describe('getUTCEndOfDay', () => {
+    it('should return the end of the given day in UTC', () => {
+      const date = getUTCEndOfDay(2025, 5, 15);
+      expect(date).toBeInstanceOf(Date);
+      expect(date.toISOString()).toBe('2025-05-15T23:59:59.000Z');
+    });
+    it('should handle December 31', () => {
+      const date = getUTCEndOfDay(2025, 12, 31);
+      expect(date.toISOString()).toBe('2025-12-31T23:59:59.000Z');
+    });
+  });
+
+  describe('isValidUTCDate', () => {
+    it('should return true for a valid ISO string', () => {
+      expect(isValidUTCDate('2025-05-15T10:30:00Z')).toBe(true);
+    });
+    it('should return false for an invalid string', () => {
+      expect(isValidUTCDate('not-a-date')).toBe(false);
+    });
+    it('should return false for empty string', () => {
+      expect(isValidUTCDate('')).toBe(false);
+    });
+    it('should return false for malformed date', () => {
+      expect(isValidUTCDate('2025-13-99T99:99:99Z')).toBe(false);
+    });
+  });
+
+  describe('enrichEventWithDateTimeParts edge cases', () => {
+    it('should return null if event is null', () => {
+      expect(enrichEventWithDateTimeParts(null)).toBeNull();
+    });
+    it('should return undefined if event is undefined', () => {
+      expect(enrichEventWithDateTimeParts(undefined)).toBeUndefined();
+    });
+    it('should not set date/time parts if EVED_START/EVED_END are missing', () => {
+      const event = { EVEN_ID: 1 };
+      const result = enrichEventWithDateTimeParts(event, true);
+      expect(result.startDate).toBeUndefined();
+      expect(result.endDate).toBeUndefined();
+      expect(result.startTime).toBeUndefined();
+      expect(result.endTime).toBeUndefined();
+    });
+    it('should throw if EVED_START/EVED_END are invalid', () => {
+      const event = { EVEN_ID: 1, EVED_START: 'bad-date', EVED_END: 'bad-date' };
+      expect(() => enrichEventWithDateTimeParts(event, true)).toThrow(RangeError);
+    });
+  });
+
 });
