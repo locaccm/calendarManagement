@@ -2,19 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load environment variables if DATABASE_URL is not set
+// Load environment variables from .env file if not already set
 if (!process.env.DATABASE_URL) {
-  const env = process.env.NODE_ENV || 'development';
-  switch (env) {
-    case 'test':
-      dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
-      break;
-    case 'development':
-      dotenv.config({ path: path.resolve(process.cwd(), '.env.development') });
-      break;
-    default:
-      dotenv.config();
-  }
+  dotenv.config();
 }
 
 // Throw a clear error if DATABASE_URL is still not set

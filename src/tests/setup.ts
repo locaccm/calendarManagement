@@ -9,10 +9,10 @@ const execPromise = promisify(exec);
 let container: StartedTestContainer;
 let prisma: PrismaClient;
 
-// Charger les variables d'environnement de test
-dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
+// Load test environment variables
+dotenv.config();
 
-// Configuration du conteneur PostgreSQL pour les tests
+// PostgreSQL container configuration for tests
 async function setupTestDatabase() {
   // Start a PostgreSQL container for tests
   container = await new GenericContainer('postgres:14')

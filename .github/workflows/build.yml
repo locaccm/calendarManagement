@@ -24,22 +24,22 @@ jobs:
       - name: Install dependencies
         run: npm install  
 
-      - name: Set Database URL
-        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env
+          echo "NODE_ENV=test" >> .env
 
-      - name: Verify DATABASE_URL
-        run: echo "DATABASE_URL is set to $DATABASE_URL"
+      - name: Verify .env file creation
+        run: echo ".env file has been created"
 
       - name: Run tests with coverage
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run test -- --coverage --coverageReporters=lcov
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
   eslint:
     name: ESLint Check

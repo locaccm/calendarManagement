@@ -31,10 +31,9 @@ describe('Prisma Module Coverage Tests', () => {
     process.env = originalEnv;
   });
 
-  it('should load .env.test file in test environment', () => {
-    // Setup test environment
+  it('should load .env file when DATABASE_URL is not set', () => {
+    // Setup environment
     delete process.env.DATABASE_URL;
-    process.env.NODE_ENV = 'test';
     
     // Mock dotenv.config to set DATABASE_URL
     (dotenv.config as jest.Mock).mockImplementation(() => {
@@ -46,54 +45,25 @@ describe('Prisma Module Coverage Tests', () => {
     jest.isolateModules(() => {
       require('../prisma');
       
-      // Verify dotenv.config was called with the correct path
-      expect(dotenv.config).toHaveBeenCalledWith({
-        path: expect.stringContaining('.env.test')
-      });
+      // Verify dotenv.config was called
+      expect(dotenv.config).toHaveBeenCalled();
     });
   });
 
-  it('should load .env.development file in development environment', () => {
-    // Setup development environment
-    delete process.env.DATABASE_URL;
-    process.env.NODE_ENV = 'development';
-    
-    // Mock dotenv.config to set DATABASE_URL
-    (dotenv.config as jest.Mock).mockImplementation(() => {
-      process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-      return {};
-    });
+  it('should not load .env file when DATABASE_URL is already set', () => {
+    // Setup environment with DATABASE_URL already set
+    process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
     
     // Import the module to trigger the code path
     jest.isolateModules(() => {
       require('../prisma');
       
-      // Verify dotenv.config was called with the correct path
-      expect(dotenv.config).toHaveBeenCalledWith({
-        path: expect.stringContaining('.env.development')
-      });
+      // Verify dotenv.config was not called
+      expect(dotenv.config).not.toHaveBeenCalled();
     });
   });
 
-  it('should load default .env file when NODE_ENV is not test or development', () => {
-    // Setup production environment
-    delete process.env.DATABASE_URL;
-    process.env.NODE_ENV = 'production';
-    
-    // Mock dotenv.config to set DATABASE_URL
-    (dotenv.config as jest.Mock).mockImplementation(() => {
-      process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
-      return {};
-    });
-    
-    // Import the module to trigger the code path
-    jest.isolateModules(() => {
-      require('../prisma');
-      
-      // Verify dotenv.config was called without a specific path
-      expect(dotenv.config).toHaveBeenCalledWith();
-    });
-  });
+
 
   it('should validate DATABASE_URL format', () => {
     // Create a spy on console.error

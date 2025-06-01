@@ -72,7 +72,7 @@ describe('Prisma Client', () => {
     expect(dbUrlPattern.test('postgresql://user@localhost:5432/db')).toBe(false);
   });
 
-  it('should load .env.test file in test environment', () => {
+  it('should load .env file when DATABASE_URL is not set', () => {
     // Save original dotenv.config
     const originalConfig = dotenv.config;
     
@@ -82,46 +82,31 @@ describe('Prisma Client', () => {
       
       // Setup test environment
       const originalUrl = process.env.DATABASE_URL;
-      const originalEnv = process.env.NODE_ENV;
       
       delete process.env.DATABASE_URL;
-      process.env.NODE_ENV = 'test';
       
       // Call the function that loads environment variables
       const loadEnv = () => {
         if (!process.env.DATABASE_URL) {
-          const env = process.env.NODE_ENV || 'development';
-          switch (env) {
-            case 'test':
-              dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
-              break;
-            case 'development':
-              dotenv.config({ path: path.resolve(process.cwd(), '.env.development') });
-              break;
-            default:
-              dotenv.config();
-          }
+          dotenv.config();
         }
       };
       
       // Call the function
       loadEnv();
       
-      // Verify dotenv.config was called with the correct path
-      expect(dotenv.config).toHaveBeenCalledWith({
-        path: expect.stringContaining('.env.test')
-      });
+      // Verify dotenv.config was called
+      expect(dotenv.config).toHaveBeenCalled();
       
       // Restore environment
       process.env.DATABASE_URL = originalUrl;
-      process.env.NODE_ENV = originalEnv;
     } finally {
       // Restore original dotenv.config
       dotenv.config = originalConfig;
     }
   });
 
-  it('should load .env.development file in development environment', () => {
+  it('should not load .env file when DATABASE_URL is already set', () => {
     // Save original dotenv.config
     const originalConfig = dotenv.config;
     
@@ -129,41 +114,22 @@ describe('Prisma Client', () => {
       // Mock dotenv.config
       dotenv.config = jest.fn().mockReturnValue({});
       
-      // Setup development environment
-      const originalUrl = process.env.DATABASE_URL;
-      const originalEnv = process.env.NODE_ENV;
-      
-      delete process.env.DATABASE_URL;
-      process.env.NODE_ENV = 'development';
+      // Ensure DATABASE_URL is set
+      process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
       
       // Call the function that loads environment variables
       const loadEnv = () => {
         if (!process.env.DATABASE_URL) {
-          const env = process.env.NODE_ENV || 'development';
-          switch (env) {
-            case 'test':
-              dotenv.config({ path: path.resolve(process.cwd(), '.env.test') });
-              break;
-            case 'development':
-              dotenv.config({ path: path.resolve(process.cwd(), '.env.development') });
-              break;
-            default:
-              dotenv.config();
-          }
+          dotenv.config();
         }
       };
       
       // Call the function
       loadEnv();
       
-      // Verify dotenv.config was called with the correct path
-      expect(dotenv.config).toHaveBeenCalledWith({
-        path: expect.stringContaining('.env.development')
-      });
+      // Verify dotenv.config was NOT called
+      expect(dotenv.config).not.toHaveBeenCalled();
       
-      // Restore environment
-      process.env.DATABASE_URL = originalUrl;
-      process.env.NODE_ENV = originalEnv;
     } finally {
       // Restore original dotenv.config
       dotenv.config = originalConfig;

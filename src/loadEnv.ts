@@ -1,22 +1,8 @@
-// Dynamically load the correct .env file based on NODE_ENV
-import fs from 'fs';
-import path from 'path';
+// Load environment variables from .env file
 import dotenv from 'dotenv';
 
-const env = process.env.NODE_ENV || 'development';
-let envFile = '.env';
+// Load the standard .env file regardless of environment
+dotenv.config();
 
-if (env === 'test') {
-  if (fs.existsSync(path.resolve(process.cwd(), '.env.test'))) {
-    envFile = '.env.test';
-  }
-} else if (env === 'development') {
-  if (fs.existsSync(path.resolve(process.cwd(), '.env.developpement'))) {
-    envFile = '.env.developpement';
-  }
-}
-// else: default to .env (for production or fallback)
-
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
-
-export default envFile;
+// Export the .env filename for reference
+export default '.env';

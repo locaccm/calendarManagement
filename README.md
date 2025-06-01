@@ -61,12 +61,9 @@ npm run dev
 
 ## ⚙️ Configuration
 
-The application uses different environment files depending on the execution mode:
+The application uses a single `.env` file for all environments. The environment mode is controlled by the `NODE_ENV` variable:
 
-- `.env` - Production environment (used with `npm start`)
-- `.env.development` - Development environment (used with `npm run dev`)
-
-Create these files at the root of the project and configure the following:
+Create a `.env` file at the root of the project and configure the following:
 
 ```env
 # Database configuration
