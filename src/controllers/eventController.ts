@@ -5,7 +5,7 @@ import { EventExtended } from '../models/EventExtended';
 import { EventWhereInput, EventCreateInput } from '../types/prisma';
 import { normalizeRequestDates } from '../utils/dateFormatHelper';
 
-// Helper pour convertir une valeur en Date ou undefined
+// Helper to convert a value to Date or undefined
 function toDateOrUndefined(val: unknown): Date | undefined {
   if (val == null) return undefined;
   if (val instanceof Date) return val;
@@ -16,20 +16,27 @@ function toDateOrUndefined(val: unknown): Date | undefined {
   return undefined;
 }
 
-// Helper pour convertir un objet Prisma (avec null) en Event strict
+// Helper to convert a Prisma object (with null) to strict Event
 import { enrichEventWithDateTimeParts } from '../utils/dateUtils';
 
 export function sanitizeEvent(prismaEvent: any): Event {
   function formatDateFields(startVal: any, endVal: any): { EVED_START: string; EVED_END: string } {
-    if (!startVal || !endVal) {
+    // Safely handle null, undefined, or invalid date values
+    if (startVal === null || startVal === undefined || endVal === null || endVal === undefined) {
       return { EVED_START: '', EVED_END: '' };
     }
+    
+    // Convert to Date objects if they aren't already
     const dStart = startVal instanceof Date ? startVal : new Date(startVal);
     const dEnd = endVal instanceof Date ? endVal : new Date(endVal);
+    
+    // Validate that both dates are valid
     if (isNaN(dStart.getTime()) || isNaN(dEnd.getTime())) {
+      console.warn('Invalid date detected in formatDateFields:', { startVal, endVal });
       return { EVED_START: '', EVED_END: '' };
     }
-    // Pour les tests, nous devons toujours retourner les dates au format ISO
+    
+    // For tests, we must always return dates in ISO format
     return {
       EVED_START: dStart.toISOString(),
       EVED_END: dEnd.toISOString(),

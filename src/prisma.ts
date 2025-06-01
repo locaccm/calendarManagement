@@ -9,17 +9,18 @@ if (!process.env.DATABASE_URL) {
 
 // Throw a clear error if DATABASE_URL is still not set
 if (!process.env.DATABASE_URL) {
-  console.error('DATABASE_URL is missing. Please check your .env files or environment settings.');
+  console.error('DATABASE_URL is missing. Please check your .env file or environment settings.');
   throw new Error(
     'DATABASE_URL is not defined. Ensure it is set properly in the environment variables.',
   );
 }
 
 // Validate that the DATABASE_URL has the correct format
-const dbUrlPattern = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+$/;
+// Allow for query parameters at the end of the URL
+const dbUrlPattern = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+(\?.*)?$/;
 if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
   console.error(
-    'DATABASE_URL has an invalid format. Expected format: postgresql://user:password@host:port/database',
+    `DATABASE_URL has an invalid format: ${process.env.DATABASE_URL.substring(0, 10)}... Expected format: postgresql://user:password@host:port/database`,
   );
   throw new Error('Invalid DATABASE_URL format. Please check your environment configuration.');
 }

@@ -83,10 +83,15 @@ describe('Prisma Module Coverage Tests', () => {
         // Expected to throw, we'll verify with the spy
       }
       
-      // Verify console.error was called with the right message
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'DATABASE_URL has an invalid format. Expected format: postgresql://user:password@host:port/database'
+      // Verify console.error was called with a message about invalid format
+      expect(consoleErrorSpy).toHaveBeenCalled();
+      // We can't check the exact message as it includes the actual DATABASE_URL value
+      // But we can check that it mentions 'invalid format'
+      const calls = consoleErrorSpy.mock.calls;
+      const hasInvalidFormatMessage = calls.some(
+        (call) => typeof call[0] === 'string' && call[0].includes('invalid format'),
       );
+      expect(hasInvalidFormatMessage).toBe(true);
       
       // Verify Error was constructed with the right message
       expect(errorSpy).toHaveBeenCalledWith(
@@ -122,7 +127,7 @@ describe('Prisma Module Coverage Tests', () => {
       
       // Verify console.error was called with the right message
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'DATABASE_URL is missing. Please check your .env files or environment settings.'
+        'DATABASE_URL is missing. Please check your .env file or environment settings.'
       );
       
       // Verify Error was constructed with the right message
@@ -146,11 +151,13 @@ describe('Prisma Module Coverage Tests', () => {
     // Set valid DATABASE_URL
     process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/db';
     
-    // Mock PrismaClient constructor to throw error
-    const initError = new Error('Prisma Client initialization error');
-    (PrismaClient as jest.Mock).mockImplementation(() => {
-      throw initError;
+    // Mock PrismaClient constructor to throw error with the expected message
+    const mockPrismaClient = jest.fn().mockImplementation(() => {
+      // Create an error with the specific message we're expecting in the test
+      const error = new Error('Prisma Client initialization error');
+      throw error;
     });
+    (PrismaClient as jest.Mock).mockImplementation(mockPrismaClient);
     
     // Import the module to trigger the code path
     jest.isolateModules(() => {
@@ -160,11 +167,13 @@ describe('Prisma Module Coverage Tests', () => {
         // Expected to throw, we'll verify with the spy
       }
       
-      // Verify console.error was called with the right message
+      // Verify console.error was called with the right messages
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Failed to initialize Prisma Client:',
         'Prisma Client initialization error'
       );
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Current environment:', 'test');
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Database URL pattern valid:', true);
       
       // Verify Error was constructed with the right message
       expect(errorSpy).toHaveBeenCalledWith(
