@@ -129,7 +129,6 @@ router.get('/en/events/filter', authorizeWithApi({ rightName: 'filterEvents' }),
  *                 $ref: '#/components/schemas/Event'
  */
 router.get('/events', authorizeWithApi({ rightName: 'getAllEvents' }), getEvents);
-// router.get('/fr/evenements', getEvents); // Removed duplicate endpoint
 
 /**
  * @swagger

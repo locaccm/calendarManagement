@@ -36,6 +36,7 @@ export function sanitizeEvent(prismaEvent: any): Event {
     }
 
     // For tests, we must always return dates in ISO format
+    // Internal: camelCase, API: ALL_CAPS
     return {
       EVED_START: dStart.toISOString(),
       EVED_END: dEnd.toISOString(),
@@ -43,29 +44,46 @@ export function sanitizeEvent(prismaEvent: any): Event {
   }
   // Ensure that EVED_START and EVED_END fields are always strings
   const { EVED_START, EVED_END } = formatDateFields(prismaEvent.EVED_START, prismaEvent.EVED_END);
+  let sanitizedEvedStart;
+  if (typeof EVED_START === 'string') {
+    sanitizedEvedStart = EVED_START;
+  } else if (
+    EVED_START &&
+    typeof EVED_START === 'object' &&
+    typeof (EVED_START as Date).toISOString === 'function'
+  ) {
+    sanitizedEvedStart = (EVED_START as Date).toISOString();
+  } else {
+    sanitizedEvedStart = String(EVED_START);
+  }
+
+  let sanitizedEvedEnd;
+  if (typeof EVED_END === 'string') {
+    sanitizedEvedEnd = EVED_END;
+  } else if (
+    EVED_END &&
+    typeof EVED_END === 'object' &&
+    typeof (EVED_END as Date).toISOString === 'function'
+  ) {
+    sanitizedEvedEnd = (EVED_END as Date).toISOString();
+  } else {
+    sanitizedEvedEnd = String(EVED_END);
+  }
+
   const baseEvent = {
     EVEN_ID: prismaEvent.EVEN_ID!,
     EVEC_LIB: prismaEvent.EVEC_LIB ?? '',
-    EVED_START:
-      typeof EVED_START === 'string'
-        ? EVED_START
-        : (EVED_START as any) instanceof Date
-          ? (EVED_START as Date).toISOString()
-          : String(EVED_START),
-    EVED_END:
-      typeof EVED_END === 'string'
-        ? EVED_END
-        : (EVED_END as any) instanceof Date
-          ? (EVED_END as Date).toISOString()
-          : String(EVED_END),
+    EVED_START: sanitizedEvedStart, // API contract field
+    EVED_END: sanitizedEvedEnd, // API contract field
     USEN_ID: prismaEvent.USEN_ID ?? 0,
     ACCN_ID: prismaEvent.ACCN_ID ?? 0,
   };
+
   return enrichEventWithDateTimeParts(baseEvent, true);
 }
 
 function sanitizeEvents(events: any[]): Event[] {
-  return events.map(sanitizeEvent);
+  return events.map(sanitizeEvent); // Helper for arrays
 }
 
 interface EventData {
@@ -270,6 +288,100 @@ function suggestAlternativeSlots(
   return suggestions;
 }
 
+// --- Helper functions for createEvent complexity reduction ---
+function validateEventBodyFields(body: any): string[] {
+  const missing: string[] = [];
+  if (!body.EVEC_LIB) missing.push('EVEC_LIB');
+  if (!body.USEN_ID) missing.push('USEN_ID');
+  if (!body.ACCN_ID) missing.push('ACCN_ID');
+  return missing;
+}
+
+function validateDateFormats(body: any): { ok: boolean; error?: string; details?: string[] } {
+  const hasIso = body.EVED_START && body.EVED_END;
+  const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
+  const hasTestFormat = body.date && body.startTime && body.endTime;
+  if (!hasIso && !hasSplit && !hasTestFormat) {
+    return {
+      ok: false,
+      error: 'Validation error',
+      details: [
+        'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
+      ],
+    };
+  }
+  if (hasSplit) {
+    if (
+      isNaN(Date.parse(body.DATE_START + 'T' + body.START_TIME + ':00Z')) ||
+      isNaN(Date.parse(body.DATE_END + 'T' + body.END_TIME + ':00Z'))
+    ) {
+      return {
+        ok: false,
+        error: 'Validation error',
+        details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
+      };
+    }
+  }
+  if (hasIso) {
+    if (isNaN(Date.parse(body.EVED_START)) || isNaN(Date.parse(body.EVED_END))) {
+      return {
+        ok: false,
+        error: 'Validation error',
+        details: ['EVED_START ou EVED_END invalide(s).'],
+      };
+    }
+  }
+  if (hasTestFormat) {
+    if (
+      isNaN(Date.parse(body.date + 'T' + body.startTime + ':00Z')) ||
+      isNaN(Date.parse(body.date + 'T' + body.endTime + ':00Z'))
+    ) {
+      return {
+        ok: false,
+        error: 'Validation error',
+        details: ['date, startTime or endTime invalid.'],
+      };
+    }
+  }
+  return { ok: true };
+}
+
+function normalizeTestFormatFields(body: any): void {
+  if (body.date && body.startTime && body.endTime) {
+    body.DATE_START = body.date;
+    body.DATE_END = body.date;
+    body.START_TIME = body.startTime;
+    body.END_TIME = body.endTime;
+  }
+}
+
+function shapeEventResponse(
+  req: Request,
+  sanitizedEvent: any,
+  flags: { hasIso: boolean; hasSplit: boolean; hasTestFormat: boolean },
+): any {
+  let responseObject: any = { ...sanitizedEvent };
+  if (flags.hasTestFormat) {
+    responseObject.DATE_START = req.body.date;
+    responseObject.DATE_END = req.body.date;
+    responseObject.START_TIME = req.body.startTime;
+    responseObject.END_TIME = req.body.endTime;
+  } else if (flags.hasIso) {
+    const startDate = new Date(req.body.EVED_START);
+    const endDate = new Date(req.body.EVED_END);
+    responseObject.DATE_START = startDate.toISOString().split('T')[0];
+    responseObject.DATE_END = endDate.toISOString().split('T')[0];
+    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
+    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
+  } else if (flags.hasSplit) {
+    responseObject.DATE_START = req.body.DATE_START;
+    responseObject.DATE_END = req.body.DATE_END;
+    responseObject.START_TIME = req.body.START_TIME;
+    responseObject.END_TIME = req.body.END_TIME;
+  }
+  return responseObject;
+}
+
 export const createEvent = async (req: Request, res: Response) => {
   try {
     // For tests that send an empty body
@@ -279,71 +391,31 @@ export const createEvent = async (req: Request, res: Response) => {
         details: ['Request body cannot be empty.'],
       });
     }
-    // Validation stricte du body
-    if (!req.body.EVEC_LIB || !req.body.USEN_ID || !req.body.ACCN_ID) {
-      // Return 400 for tests, as expected
+    // Validate required fields
+    const missingFields = validateEventBodyFields(req.body);
+    if (missingFields.length > 0) {
       return res.status(400).json({
         error: 'Validation error',
         details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
       });
     }
-
-    // Validation stricte des dates
+    // Validate date formats
+    const dateValidation = validateDateFormats(req.body);
+    if (!dateValidation.ok) {
+      return res.status(400).json({
+        error: dateValidation.error,
+        details: dateValidation.details,
+      });
+    }
+    // Normalize test format fields if needed
+    normalizeTestFormatFields(req.body);
+    // Detect format flags for response shaping
     const hasIso = req.body.EVED_START && req.body.EVED_END;
     const hasSplit =
       req.body.DATE_START && req.body.START_TIME && req.body.DATE_END && req.body.END_TIME;
-
-    // Support for the format used in tests (date, startTime, endTime)
     const hasTestFormat = req.body.date && req.body.startTime && req.body.endTime;
-
-    if (!hasIso && !hasSplit && !hasTestFormat) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: [
-          'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
-        ],
-      });
-    }
-
-    if (hasSplit) {
-      if (
-        isNaN(Date.parse(req.body.DATE_START + 'T' + req.body.START_TIME + ':00Z')) ||
-        isNaN(Date.parse(req.body.DATE_END + 'T' + req.body.END_TIME + ':00Z'))
-      ) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
-        });
-      }
-    }
-    if (hasIso) {
-      if (isNaN(Date.parse(req.body.EVED_START)) || isNaN(Date.parse(req.body.EVED_END))) {
-        return res
-          .status(400)
-          .json({ error: 'Validation error', details: ['EVED_START ou EVED_END invalide(s).'] });
-      }
-    }
-    if (hasTestFormat) {
-      if (
-        isNaN(Date.parse(req.body.date + 'T' + req.body.startTime + ':00Z')) ||
-        isNaN(Date.parse(req.body.date + 'T' + req.body.endTime + ':00Z'))
-      ) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: ['date, startTime or endTime invalid.'],
-        });
-      }
-
-      // Ajouter les champs attendus par les tests
-      req.body.DATE_START = req.body.date;
-      req.body.DATE_END = req.body.date;
-      req.body.START_TIME = req.body.startTime;
-      req.body.END_TIME = req.body.endTime;
-    }
-
     // Normalize date formats (handles different formats used in tests)
     const { EVED_START, EVED_END } = normalizeRequestDates(req);
-
     // Do not include validation fields in the object sent to Prisma
     const eventInput: EventCreateInput = {
       EVED_START: toDateOrUndefined(EVED_START),
@@ -352,48 +424,95 @@ export const createEvent = async (req: Request, res: Response) => {
       USEN_ID: req.body.USEN_ID ?? undefined,
       ACCN_ID: req.body.ACCN_ID ?? undefined,
     };
-
     // Conflict checking is disabled to allow multiple events in the same time slot
     const newEvent = await prisma.event.create({
       data: eventInput,
     });
-
     const sanitizedEvent = sanitizeEvent(newEvent);
-
-    // Pour les tests, ajouter les champs attendus
-    let responseObject: any = { ...sanitizedEvent };
-    // Ajouter les champs DATE_START, DATE_END, START_TIME, END_TIME pour tous les types de formats
-    if (hasTestFormat) {
-      responseObject.DATE_START = req.body.date;
-      responseObject.DATE_END = req.body.date;
-      responseObject.START_TIME = req.body.startTime;
-      responseObject.END_TIME = req.body.endTime;
-    } else if (hasIso) {
-      const startDate = new Date(req.body.EVED_START);
-      const endDate = new Date(req.body.EVED_END);
-      responseObject.DATE_START = startDate.toISOString().split('T')[0];
-      responseObject.DATE_END = endDate.toISOString().split('T')[0];
-      responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
-      responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
-    } else if (hasSplit) {
-      responseObject.DATE_START = req.body.DATE_START;
-      responseObject.DATE_END = req.body.DATE_END;
-      responseObject.START_TIME = req.body.START_TIME;
-      responseObject.END_TIME = req.body.END_TIME;
-    }
-
+    // Shape the response
+    const responseObject = shapeEventResponse(req, sanitizedEvent, {
+      hasIso,
+      hasSplit,
+      hasTestFormat,
+    });
     res.status(201).json(responseObject);
   } catch (error) {
     handleError(res, 'Error while creating the event.');
   }
 };
 
+// --- Helper functions for updateEvent complexity reduction ---
+function validateUpdateEventBodyFields(body: any): string[] {
+  const missing: string[] = [];
+  if (!body.EVEC_LIB) missing.push('EVEC_LIB');
+  if (!body.USEN_ID) missing.push('USEN_ID');
+  if (!body.ACCN_ID) missing.push('ACCN_ID');
+  return missing;
+}
+
+function validateUpdateDateFormats(body: any): { ok: boolean; error?: string; details?: string[] } {
+  const hasIso = body.EVED_START && body.EVED_END;
+  const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
+  if (!hasIso && !hasSplit) {
+    return {
+      ok: false,
+      error: 'Validation error',
+      details: [
+        'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
+      ],
+    };
+  }
+  if (hasSplit) {
+    if (
+      isNaN(Date.parse(body.DATE_START + 'T' + body.START_TIME + ':00Z')) ||
+      isNaN(Date.parse(body.DATE_END + 'T' + body.END_TIME + ':00Z'))
+    ) {
+      return {
+        ok: false,
+        error: 'Validation error',
+        details: ['DATE_START, START_TIME, DATE_END or END_TIME invalid.'],
+      };
+    }
+  }
+  if (hasIso) {
+    if (isNaN(Date.parse(body.EVED_START)) || isNaN(Date.parse(body.EVED_END))) {
+      return {
+        ok: false,
+        error: 'Validation error',
+        details: ['EVED_START or EVED_END invalid.'],
+      };
+    }
+  }
+  return { ok: true };
+}
+
+function shapeUpdateEventResponse(
+  req: Request,
+  sanitizedEvent: any,
+  flags: { hasIso: boolean; hasSplit: boolean },
+): any {
+  let responseObject: any = { ...sanitizedEvent };
+  if (flags.hasIso) {
+    const startDate = new Date(req.body.EVED_START);
+    const endDate = new Date(req.body.EVED_END);
+    responseObject.DATE_START = startDate.toISOString().split('T')[0];
+    responseObject.DATE_END = endDate.toISOString().split('T')[0];
+    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
+    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
+  } else if (flags.hasSplit) {
+    responseObject.DATE_START = req.body.DATE_START;
+    responseObject.DATE_END = req.body.DATE_END;
+    responseObject.START_TIME = req.body.START_TIME;
+    responseObject.END_TIME = req.body.END_TIME;
+  }
+  return responseObject;
+}
+
 export const updateEvent = async (req: Request, res: Response) => {
   const eventId = Number(req.params.id);
   if (!eventId || isNaN(eventId)) {
     return res.status(404).json({ error: 'Event not found.' });
   }
-
   try {
     // For tests that send an invalid request body, return 400
     if (req.body.EVEC_LIB === '') {
@@ -402,54 +521,33 @@ export const updateEvent = async (req: Request, res: Response) => {
         details: ['EVEC_LIB cannot be empty.'],
       });
     }
-
     // First check if the event exists
     const event = await prisma.event.findUnique({ where: { EVEN_ID: eventId } });
     if (!event) {
       return res.status(404).json({ error: 'Event not found.' });
     }
-
-    // Validation stricte du body
-    if (!req.body.EVEC_LIB || !req.body.USEN_ID || !req.body.ACCN_ID) {
+    // Validate required fields
+    const missingFields = validateUpdateEventBodyFields(req.body);
+    if (missingFields.length > 0) {
       return res.status(400).json({
         error: 'Validation error',
-        details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
+        details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
       });
     }
-    // Validation stricte des dates
+    // Validate date formats
+    const dateValidation = validateUpdateDateFormats(req.body);
+    if (!dateValidation.ok) {
+      return res.status(400).json({
+        error: dateValidation.error,
+        details: dateValidation.details,
+      });
+    }
+    // Detect format flags for response shaping
     const hasIso = req.body.EVED_START && req.body.EVED_END;
     const hasSplit =
       req.body.DATE_START && req.body.START_TIME && req.body.DATE_END && req.body.END_TIME;
-    if (!hasIso && !hasSplit) {
-      return res.status(400).json({
-        error: 'Validation error',
-        details: [
-          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
-        ],
-      });
-    }
-    if (hasSplit) {
-      if (
-        isNaN(Date.parse(req.body.DATE_START + 'T' + req.body.START_TIME + ':00Z')) ||
-        isNaN(Date.parse(req.body.DATE_END + 'T' + req.body.END_TIME + ':00Z'))
-      ) {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
-        });
-      }
-    }
-    if (hasIso) {
-      if (isNaN(Date.parse(req.body.EVED_START)) || isNaN(Date.parse(req.body.EVED_END))) {
-        return res
-          .status(400)
-          .json({ error: 'Validation error', details: ['EVED_START ou EVED_END invalide(s).'] });
-      }
-    }
-
     // Normalize date formats
     const { EVED_START, EVED_END } = normalizeRequestDates(req);
-
     const validatedBody: EventCreateInput = {
       EVEC_LIB: req.body.EVEC_LIB,
       EVED_START: toDateOrUndefined(EVED_START),
@@ -459,31 +557,14 @@ export const updateEvent = async (req: Request, res: Response) => {
     };
     // Conflict checking is disabled to allow multiple events in the same time slot
     // No conflict checking is performed
-
     const updatedEvent = await prisma.event.update({
       where: { EVEN_ID: eventId },
       data: validatedBody,
     });
-
     // Sanitize the event
     const sanitizedEvent = sanitizeEvent(updatedEvent);
-    // Pour les tests, ajouter les champs attendus
-    let responseObject: any = { ...sanitizedEvent };
-    // Ajouter les champs DATE_START, DATE_END, START_TIME, END_TIME pour tous les types de formats
-    if (hasIso) {
-      const startDate = new Date(req.body.EVED_START);
-      const endDate = new Date(req.body.EVED_END);
-      responseObject.DATE_START = startDate.toISOString().split('T')[0];
-      responseObject.DATE_END = endDate.toISOString().split('T')[0];
-      responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
-      responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
-    } else if (hasSplit) {
-      responseObject.DATE_START = req.body.DATE_START;
-      responseObject.DATE_END = req.body.DATE_END;
-      responseObject.START_TIME = req.body.START_TIME;
-      responseObject.END_TIME = req.body.END_TIME;
-    }
-
+    // Shape the response
+    const responseObject = shapeUpdateEventResponse(req, sanitizedEvent, { hasIso, hasSplit });
     res.status(200).json(responseObject);
   } catch (error) {
     handleError(res, 'Error while updating the event.');

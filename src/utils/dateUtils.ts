@@ -110,7 +110,7 @@ export function enrichEventWithDateTimeParts(event: any, forceEnrich: boolean = 
     const endDate = new Date(event.EVED_END);
     result.endDate = extractDatePart(endDate);
     result.endTime = extractTimePart(endDate);
-  }
+  } // Keep EVED_START/EVED_END for DB/API contract
 
   return result;
 }
