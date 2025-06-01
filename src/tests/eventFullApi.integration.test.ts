@@ -15,7 +15,10 @@ let createdEventId: number;
 describe('Event API (integration, full CRUD)', () => {
   // Creation
   it('POST /events creates an event', async () => {
-    const res = await request(app).post('/events').set('Authorization', 'Bearer test-token').send(baseEvent);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(baseEvent);
     expect([201, 200, 409]).toContain(res.status);
     if ([201, 200].includes(res.status)) {
       expect(res.body.EVEN_ID).toBeDefined();
@@ -32,7 +35,9 @@ describe('Event API (integration, full CRUD)', () => {
 
   // Lecture par ID
   it('GET /events/:id returns an existing event', async () => {
-    const res = await request(app).get(`/events/${createdEventId}`).set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .get(`/events/${createdEventId}`)
+      .set('Authorization', 'Bearer test-token');
     expect([200, 404]).toContain(res.status);
     if (res.status === 200) {
       expect(res.body.EVEN_ID).toBe(createdEventId);
@@ -41,13 +46,16 @@ describe('Event API (integration, full CRUD)', () => {
 
   // Modification
   it('PUT /events/:id modifies an event', async () => {
-    const res = await request(app).put(`/events/${createdEventId}`).set('Authorization', 'Bearer test-token').send({
-      EVEC_LIB: 'Modified meeting',
-      EVED_START: '2025-06-01T09:00:00Z',
-      EVED_END: '2025-06-01T11:00:00Z',
-      USEN_ID: 1,
-      ACCN_ID: 1,
-    });
+    const res = await request(app)
+      .put(`/events/${createdEventId}`)
+      .set('Authorization', 'Bearer test-token')
+      .send({
+        EVEC_LIB: 'Modified meeting',
+        EVED_START: '2025-06-01T09:00:00Z',
+        EVED_END: '2025-06-01T11:00:00Z',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      });
     expect([200, 404]).toContain(res.status);
     if (res.status === 200) {
       expect(res.body.EVEC_LIB).toBe('Modified meeting');
@@ -56,31 +64,43 @@ describe('Event API (integration, full CRUD)', () => {
 
   // Suppression
   it('DELETE /events/:id deletes an event', async () => {
-    const res = await request(app).delete(`/events/${createdEventId}`).set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .delete(`/events/${createdEventId}`)
+      .set('Authorization', 'Bearer test-token');
     expect([200, 204, 404]).toContain(res.status);
   });
 
   // Read by ID after deletion
   it('GET /events/:id returns 404 after deletion', async () => {
-    const res = await request(app).get(`/events/${createdEventId}`).set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .get(`/events/${createdEventId}`)
+      .set('Authorization', 'Bearer test-token');
     expect(res.status).toBe(404);
   });
 
   // Error case: creation without required field
-  it('POST /events retourne 400 si champ obligatoire manquant', async () => {
-    const res = await request(app).post('/events').set('Authorization', 'Bearer test-token').send({});
+  it('POST /events returns 400 if required field is missing', async () => {
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send({});
     expect(res.status).toBe(400);
   });
 
-  // Cas d'erreur : modification avec mauvais ID
-  it('PUT /events/:id retourne 404 si ID inexistant', async () => {
-    const res = await request(app).put('/events/999999').set('Authorization', 'Bearer test-token').send({ EVEC_LIB: 'Test inexistant' });
+  // Error case: update with wrong ID
+  it('PUT /events/:id returns 404 if ID does not exist', async () => {
+    const res = await request(app)
+      .put('/events/999999')
+      .set('Authorization', 'Bearer test-token')
+      .send({ EVEC_LIB: 'Test nonexistent' });
     expect(res.status).toBe(404);
   });
 
-  // Cas d'erreur : suppression avec mauvais ID
-  it('DELETE /events/:id retourne 404 si ID inexistant', async () => {
-    const res = await request(app).delete('/events/999999').set('Authorization', 'Bearer test-token');
+  // Error case: deletion with wrong ID
+  it('DELETE /events/:id returns 404 if ID does not exist', async () => {
+    const res = await request(app)
+      .delete('/events/999999')
+      .set('Authorization', 'Bearer test-token');
     expect(res.status).toBe(404);
   });
 });

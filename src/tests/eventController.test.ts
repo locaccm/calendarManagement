@@ -11,30 +11,42 @@ describe('Health route', () => {
 
 describe('Events API validation & error handling', () => {
   it('POST /events with invalid body should return 400', async () => {
-    const res = await request(app).post('/events').set('Authorization', 'Bearer test-token').send({ EVEC_LIB: '', USEN_ID: 'notanumber' });
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send({ EVEC_LIB: '', USEN_ID: 'notanumber' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
     expect(res.body.details).toBeDefined();
   });
 
   it('PUT /events/:id with invalid body should return 400', async () => {
-    const res = await request(app).put('/events/1').set('Authorization', 'Bearer test-token').send({ EVEC_LIB: '' });
+    const res = await request(app)
+      .put('/events/1')
+      .set('Authorization', 'Bearer test-token')
+      .send({ EVEC_LIB: '' });
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
   });
 
   it('GET /events/99999999 (not found) should return 404', async () => {
-    const res = await request(app).get('/events/99999999').set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .get('/events/99999999')
+      .set('Authorization', 'Bearer test-token');
     expect([404, 500]).toContain(res.status); // 404 expected, 500 if DB not mocked
   });
 
   it('DELETE /events/99999999 (not found) should return 404', async () => {
-    const res = await request(app).delete('/events/99999999').set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .delete('/events/99999999')
+      .set('Authorization', 'Bearer test-token');
     expect([404, 500]).toContain(res.status);
   });
 
   it('GET /events/filter?usager=abc (invalid query) should return 400', async () => {
-    const res = await request(app).get('/events/filter?usager=abc').set('Authorization', 'Bearer test-token');
+    const res = await request(app)
+      .get('/events/filter?usager=abc')
+      .set('Authorization', 'Bearer test-token');
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
   });
@@ -50,7 +62,10 @@ describe('Events API validation & error handling', () => {
       ACCN_ID: 1,
     };
     await request(app).post('/events').set('Authorization', 'Bearer test-token').send(event);
-    const res = await request(app).post('/events').set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409, 500]).toContain(res.status); // 201/200 expected as conflicts are allowed, 409/500 if DB not mocked
   });
 });

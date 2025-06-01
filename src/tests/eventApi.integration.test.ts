@@ -32,7 +32,7 @@ describe('Events API - Creation and date/time format', () => {
     }
     accnId = accn.ACCN_ID;
   });
-  it('POST /events accepte format ISO et retourne les bons champs date/heure', async () => {
+  it('POST /events accepts ISO format and returns correct date/time fields', async () => {
     const event = {
       EVEC_LIB: 'Test ISO',
       EVED_START: '2025-06-01T09:00:00Z',
@@ -40,8 +40,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events')
-      .set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-06-01');
@@ -52,7 +54,7 @@ describe('Events API - Creation and date/time format', () => {
     }
   });
 
-  it('POST /events accepte date/startTime/endTime et retourne les bons champs', async () => {
+  it('POST /events accepts date/startTime/endTime and returns correct fields', async () => {
     const event = {
       EVEC_LIB: 'Test split',
       date: '2025-07-10',
@@ -61,8 +63,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events')
-      .set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-07-10');
@@ -81,8 +85,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).post('/events')
-      .set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-08-01');
@@ -91,7 +97,7 @@ describe('Events API - Creation and date/time format', () => {
     }
   });
 
-  it('POST /events refuse un payload incomplet', async () => {
+  it('POST /events rejects incomplete payload', async () => {
     const event = {
       EVEC_LIB: 'Test erreur',
       date: '2025-07-10',
@@ -99,13 +105,15 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: 102,
       ACCN_ID: 102,
     };
-    const res = await request(app).post('/events')
-      .set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .post('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
   });
 
-  it('PUT /events accepte format ISO et retourne les bons champs date/heure', async () => {
+  it('PUT /events accepts ISO format and returns correct date/time fields', async () => {
     const event = {
       EVEC_LIB: 'Test ISO',
       EVED_START: '2025-06-01T09:00:00Z',
@@ -113,7 +121,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .put('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-06-01');
@@ -124,7 +135,7 @@ describe('Events API - Creation and date/time format', () => {
     }
   });
 
-  it('PUT /events accepte date/startTime/endTime et retourne les bons champs', async () => {
+  it('PUT /events accepts date/startTime/endTime and returns correct fields', async () => {
     const event = {
       EVEC_LIB: 'Test split',
       date: '2025-07-10',
@@ -133,7 +144,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .put('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-07-10');
@@ -152,7 +166,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: userId,
       ACCN_ID: accnId,
     };
-    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .put('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect([201, 200, 409]).toContain(res.status); // Expected success, don't expect 500 here
     if ([201, 200].includes(res.status)) {
       expect(res.body.DATE_START).toBe('2025-08-01');
@@ -161,7 +178,7 @@ describe('Events API - Creation and date/time format', () => {
     }
   });
 
-  it('PUT /events refuse un payload incomplet', async () => {
+  it('PUT /events rejects incomplete payload', async () => {
     const event = {
       EVEC_LIB: 'Test erreur',
       date: '2025-07-10',
@@ -169,7 +186,10 @@ describe('Events API - Creation and date/time format', () => {
       USEN_ID: 102,
       ACCN_ID: 102,
     };
-    const res = await request(app).put('/events').set('Authorization', 'Bearer test-token').send(event);
+    const res = await request(app)
+      .put('/events')
+      .set('Authorization', 'Bearer test-token')
+      .send(event);
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation error');
   });

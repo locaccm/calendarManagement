@@ -20,6 +20,10 @@ describe('Prisma Client', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch (error) {
+      console.error('Failed to disconnect Prisma:', error);
+    }
   });
 });

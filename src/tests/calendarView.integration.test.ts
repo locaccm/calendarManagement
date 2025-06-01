@@ -12,7 +12,7 @@ describe('Calendar Views (integration)', () => {
       expect(res.body).toHaveProperty('events');
       expect(Array.isArray(res.body.events)).toBe(true);
     });
-    it('retourne 400 si date manquante ou invalide', async () => {
+    it('returns 400 if date is missing or invalid', async () => {
       const res = await request(app).get('/calendar/day').set('Authorization', 'Bearer test-token');
       expect(res.status).toBe(400);
     });

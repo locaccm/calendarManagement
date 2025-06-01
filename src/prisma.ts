@@ -28,7 +28,7 @@ if (!process.env.DATABASE_URL) {
 const environment = process.env.NODE_ENV || 'development';
 
 // Configure Prisma client with logging in development only
-let prisma;
+let prisma: PrismaClient;
 try {
   prisma = new PrismaClient({
     log: environment === 'development' ? ['query', 'error', 'warn'] : ['error'],
@@ -36,7 +36,7 @@ try {
 } catch (error: any) {
   console.error('Failed to initialize Prisma Client:', error.message);
   throw new Error(
-    'Prisma Client initialization failed. Check your environment variables and database configuration.'
+    'Prisma Client initialization failed. Check your environment variables and database configuration.',
   );
 }
 

@@ -1,7 +1,7 @@
 import { sanitizeEvent } from '../controllers/eventController';
 
-// This test file is temporarily excluded due to Prisma client initialization issues.
-xdescribe('sanitizeEvent', () => {
+// Test file for event sanitization functionality
+describe('sanitizeEvent', () => {
   it('returns correct date/time fields for same day', () => {
     const input = {
       EVEN_ID: 1,
@@ -12,12 +12,12 @@ xdescribe('sanitizeEvent', () => {
       ACCN_ID: 1,
     };
     const res = sanitizeEvent(input);
-    // Les dates sont maintenant toujours au format ISO complet
+    // Dates are now always in full ISO format
     expect(res.EVED_START).toBe('2025-06-01T09:00:00.000Z');
     expect(res.EVED_END).toBe('2025-06-01T11:00:00.000Z');
   });
 
-  it('retourne les bons champs date/heure pour plusieurs jours', () => {
+  it('returns correct date/time fields for multiple days', () => {
     const input = {
       EVEN_ID: 2,
       EVEC_LIB: 'Test multi',
@@ -27,7 +27,7 @@ xdescribe('sanitizeEvent', () => {
       ACCN_ID: 2,
     };
     const res = sanitizeEvent(input);
-    // Les dates sont maintenant toujours au format ISO complet
+    // Dates are now always in full ISO format
     expect(res.EVED_START).toBe('2025-06-01T09:00:00.000Z');
     expect(res.EVED_END).toBe('2025-06-03T18:00:00.000Z');
     expect(res.EVED_START).not.toBe(res.EVED_END);
