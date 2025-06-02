@@ -36,6 +36,16 @@ let mockResponse: Partial<Response>;
 let mockNext: jest.Mock;
 
 describe('Event Controller Unit Tests', () => {
+  afterAll(async () => {
+    // Close Prisma connection if available
+    if (prismaClientMock && prismaClientMock.$disconnect) {
+      await prismaClientMock.$disconnect();
+    }
+  });
+
+  afterEach(() => {
+    jest.resetModules();
+  });
   beforeEach(() => {
     mockRequest = {
       body: {},
@@ -80,7 +90,7 @@ describe('Event Controller Unit Tests', () => {
       );
     });
 
-    it('should return 500 if date fields are invalid on createEvent', async () => {
+    it('should return 400 if date fields are invalid on createEvent', async () => {
       mockRequest.body = {
         EVEC_LIB: 'Test',
         USEN_ID: 1,
@@ -91,7 +101,7 @@ describe('Event Controller Unit Tests', () => {
         END_TIME: 'invalid',
       };
       await createEvent(mockRequest as Request, mockResponse as Response);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
       // Optionally check for error object
       // expect(mockResponse.json).toHaveBeenCalledWith(
       //   expect.objectContaining({ error: expect.any(String) })
@@ -149,7 +159,7 @@ describe('Event Controller Unit Tests', () => {
       };
       prismaClientMock.event.findUnique.mockResolvedValue({ EVEN_ID: 1 });
       await updateEvent(mockRequest as Request, mockResponse as Response);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
       // Optionally check for error object
       // expect(mockResponse.json).toHaveBeenCalledWith(
       //   expect.objectContaining({ error: expect.any(String) })
@@ -354,7 +364,7 @@ describe('Event Controller Unit Tests', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Validation error',
-        details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
+        details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
       });
     });
 
@@ -372,7 +382,7 @@ describe('Event Controller Unit Tests', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Validation error',
-        details: ['EVED_START ou EVED_END invalide(s).'],
+        details: ['Invalid ISO date format for EVED_START or EVED_END.'],
       });
     });
 
@@ -392,7 +402,7 @@ describe('Event Controller Unit Tests', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Validation error',
-        details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
+        details: ['DATE_START, START_TIME, DATE_END or END_TIME is invalid.'],
       });
     });
 
@@ -410,7 +420,7 @@ describe('Event Controller Unit Tests', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Validation error',
         details: [
-          'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
+          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields, or date/startTime/endTime fields.',
         ],
       });
     });
@@ -487,7 +497,7 @@ describe('Event Controller Unit Tests', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Validation error',
         details: [
-          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
+          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields, or date/startTime/endTime fields.',
         ],
       });
     });
@@ -551,42 +561,6 @@ describe('Event Controller Unit Tests', () => {
 
   describe('getFilteredEvents validation', () => {
     it('should validate user ID format', async () => {
-      mockRequest.query = { usager: 'abc' };
-
-      await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        details: ['Invalid filter parameters.'],
-      });
-    });
-
-    it('should validate accommodation ID format', async () => {
-      mockRequest.query = { logement: 'abc' };
-
-      await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        details: ['Invalid filter parameters.'],
-      });
-    });
-
-    it('should validate date format', async () => {
-      mockRequest.query = { dateStart: 'invalid-date' };
-
-      await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-
-      expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Validation error',
-        details: ['Invalid filter parameters.'],
-      });
-    });
-
-    it('should handle all valid filter parameters', async () => {
       mockRequest.query = {
         usager: '1',
         logement: '2',

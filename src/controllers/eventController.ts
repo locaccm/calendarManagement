@@ -292,13 +292,13 @@ function suggestAlternativeSlots(
 // Validates required fields and formats for event creation and update
 function validateRequiredEventFields(
   body: any,
-  invalidDateStatus: number = 500,
+  invalidDateStatus: number = 400,
 ): { status: number; details: string[] } | null {
   // 1. Check required fields
   if (!body.EVEC_LIB || !body.USEN_ID || !body.ACCN_ID) {
     return {
       status: 400,
-      details: ['EVEC_LIB, USEN_ID et ACCN_ID sont requis.'],
+      details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
     };
   }
 
@@ -310,7 +310,7 @@ function validateRequiredEventFields(
     return {
       status: 400,
       details: [
-        'Il faut fournir soit les champs DATE_START/START_TIME/DATE_END/END_TIME, soit les champs EVED_START/EVED_END, soit les champs date/startTime/endTime.',
+        'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields, or date/startTime/endTime fields.',
       ],
     };
   }
@@ -326,10 +326,10 @@ function validateRequiredEventFields(
 
   // 3. Validate ISO format
   if (hasIso) {
-    if (!isValidDate(body.EVED_START) || !isValidDate(body.EVED_END)) {
+    if (!isValidISODate(body.EVED_START) || !isValidISODate(body.EVED_END)) {
       return {
         status: invalidDateStatus,
-        details: ['EVED_START ou EVED_END invalide(s).'],
+        details: ['Invalid ISO date format for EVED_START or EVED_END.'],
       };
     }
   }
@@ -344,7 +344,7 @@ function validateRequiredEventFields(
     ) {
       return {
         status: invalidDateStatus,
-        details: ['DATE_START, START_TIME, DATE_END ou END_TIME invalide(s).'],
+        details: ['DATE_START, START_TIME, DATE_END or END_TIME is invalid.'],
       };
     }
   }
@@ -354,13 +354,19 @@ function validateRequiredEventFields(
     if (!isValidDate(body.date) || !isValidTime(body.startTime) || !isValidTime(body.endTime)) {
       return {
         status: invalidDateStatus,
-        details: ['date, startTime ou endTime invalide(s).'],
+        details: ['date, startTime or endTime is invalid.'],
       };
     }
   }
 
   // All good
   return null;
+}
+
+// Helper: validate ISO date string (YYYY-MM-DDTHH:mm:ss.sssZ)
+function isValidISODate(date: string): boolean {
+  // Accepts strict ISO 8601 format
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(date);
 }
 
 // Helper: validate date string (YYYY-MM-DD or ISO)
@@ -447,7 +453,7 @@ export const createEvent = async (req: Request, res: Response) => {
       });
     }
     // Validate required fields and date/time formats
-    const validation = validateRequiredEventFields(req.body, 500);
+    const validation = validateRequiredEventFields(req.body, 400);
     if (validation) {
       return res.status(validation.status).json({
         error: 'Validation error',
@@ -507,7 +513,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Event not found.' });
     }
     // Validate required fields and date/time formats
-    const validation = validateRequiredEventFields(req.body, 500);
+    const validation = validateRequiredEventFields(req.body, 400);
     if (validation) {
       return res.status(validation.status).json({
         error: 'Validation error',
