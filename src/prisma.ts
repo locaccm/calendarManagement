@@ -42,15 +42,15 @@ if (!isCoverageTest) {
 const environment = process.env.NODE_ENV ?? 'development';
 
 // Configure Prisma client with logging in development only
-// NOTE: 'let' is required for Prisma mocking in CI/test environments. Do not change to 'const' unless mocking is removed.
-// SonarCloud warning suppressed: see CI/test mocking rationale above.
-let prisma: PrismaClient;
+// Use a factory function to create the prisma client, allowing for proper mocking in tests
+// while using a const export to satisfy linting rules
+const createPrismaClient = (): PrismaClient => {
+  // Special case for coverage tests - don't create a real client
+  if (isCoverageTest) {
+    // The coverage tests will mock PrismaClient, so we just need a placeholder
+    return {} as PrismaClient;
+  }
 
-// Special case for coverage tests - don't create a real client
-if (isCoverageTest) {
-  // The coverage tests will mock PrismaClient, so we just need a placeholder
-  prisma = {} as PrismaClient;
-} else {
   // Determine if we should skip DB connection (CI or explicit skip flag)
   const skipDbConnection = process.env.SKIP_DB_CONNECTION === 'true' || process.env.CI === 'true';
 
@@ -58,23 +58,42 @@ if (isCoverageTest) {
   if (skipDbConnection) {
     console.log('Skipping real database connection - using mock client');
     // Create a simple mock client that won't try to connect to a database
-    prisma = {
+    return {
       $connect: () => Promise.resolve(),
       $disconnect: () => Promise.resolve(),
     } as unknown as PrismaClient;
-  } else {
-    try {
-      prisma = new PrismaClient({
-        log: environment === 'development' ? ['query', 'error', 'warn'] : ['error'],
-      });
-    } catch (error: any) {
-      console.error('Failed to initialize Prisma Client:', error.message);
-      console.error('Current environment:', environment);
-      throw new Error(
-        `Prisma Client initialization failed: ${error.message}. Check your environment variables and database configuration.`,
-      );
-    }
   }
-}
 
-export default prisma;
+  // Otherwise create a real client
+  try {
+    return new PrismaClient({
+      log: environment === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+  } catch (error: any) {
+    console.error('Failed to initialize Prisma Client:', error.message);
+    console.error('Current environment:', environment);
+    throw new Error(
+      `Prisma Client initialization failed: ${error.message}. Check your environment variables and database configuration.`,
+    );
+  }
+};
+
+// Create the prisma client instance
+const prisma = createPrismaClient();
+
+// For testing: allow mocking by exposing the ability to reset the client
+export const __TEST_ONLY__ = {
+  setTestClient: (mockClient: PrismaClient) => {
+    // This is for tests only - TypeScript thinks prisma is constant
+    // but JavaScript allows this modification for testing
+    (global as any).__prismaClient = mockClient;
+    return mockClient;
+  },
+  getClient: () => (global as any).__prismaClient || prisma,
+};
+
+// Export a getter that will check for a test override before returning the real client
+const prismaClient =
+  process.env.NODE_ENV === 'test' ? (global as any).__prismaClient || prisma : prisma;
+
+export default prismaClient;

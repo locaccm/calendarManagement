@@ -100,7 +100,22 @@ interface TimeSlot {
   end: string;
 }
 
-function handleError(res: Response, message: string) {
+// Enhanced error handling with detailed logging
+function handleError(res: Response, message: string, error?: unknown) {
+  // Log the detailed error for server-side debugging
+  if (error) {
+    const errorDetail = error instanceof Error ? error.message : String(error);
+    console.error(`${message} Details:`, errorDetail);
+
+    // Optionally include a stack trace in non-production environments
+    if (error instanceof Error && error.stack && process.env.NODE_ENV !== 'production') {
+      console.error('Stack trace:', error.stack);
+    }
+  } else {
+    console.error(message);
+  }
+
+  // Send a standardized error response to the client
   res.status(500).json({ error: message });
 }
 
@@ -109,56 +124,92 @@ export const getEvents = async (req: Request, res: Response) => {
     const events = await prisma.event.findMany();
     res.status(200).json(sanitizeEvents(events));
   } catch (error) {
-    handleError(res, 'Error while retrieving events.');
+    handleError(res, 'Error while retrieving events.', error);
   }
 };
+
+// Function to validate filter parameters
+function validateFilterParameters(params: {
+  usager: unknown;
+  logement: unknown;
+  dateStart: unknown;
+  dateEnd: unknown;
+}): { isValid: boolean; details?: string[] } {
+  const { usager, logement, dateStart, dateEnd } = params;
+
+  if (
+    (usager && isNaN(Number(usager))) ||
+    (logement && isNaN(Number(logement))) ||
+    (dateStart && isNaN(Date.parse(String(dateStart)))) ||
+    (dateEnd && isNaN(Date.parse(String(dateEnd))))
+  ) {
+    return { isValid: false, details: ['Invalid filter parameters.'] };
+  }
+
+  return { isValid: true };
+}
+
+// Function to build query filters
+function buildEventFilters(params: {
+  usager: unknown;
+  logement: unknown;
+  dateStart: unknown;
+  dateEnd: unknown;
+}): EventWhereInput {
+  const { usager, logement, dateStart, dateEnd } = params;
+  const where: EventWhereInput = {};
+
+  if (usager) {
+    where.USEN_ID = Number(usager);
+  }
+
+  if (logement) {
+    where.ACCN_ID = Number(logement);
+  }
+
+  // Handle date filters
+  if (dateStart && dateEnd) {
+    where.EVED_START = {
+      gte: new Date(dateStart as string),
+      lte: new Date(dateEnd as string),
+    };
+  } else if (dateStart) {
+    where.EVED_START = {
+      gte: new Date(dateStart as string),
+    };
+  } else if (dateEnd) {
+    where.EVED_START = {
+      lte: new Date(dateEnd as string),
+    };
+  }
+
+  return where;
+}
 
 // GET /events/filter?usager=1&logement=2&dateStart=2025-05-01&dateEnd=2025-05-31
 export const getFilteredEvents = async (req: Request, res: Response) => {
   try {
-    const where: EventWhereInput = {};
-    const usager = req.query.usager;
-    const logement = req.query.logement;
-    const dateStart = req.query.dateStart;
-    const dateEnd = req.query.dateEnd;
+    const queryParams = {
+      usager: req.query.usager,
+      logement: req.query.logement,
+      dateStart: req.query.dateStart,
+      dateEnd: req.query.dateEnd,
+    };
 
-    // Parameter validation
-    if (
-      (usager && isNaN(Number(usager))) ||
-      (logement && isNaN(Number(logement))) ||
-      (dateStart && isNaN(Date.parse(String(dateStart)))) ||
-      (dateEnd && isNaN(Date.parse(String(dateEnd))))
-    ) {
-      return res
-        .status(400)
-        .json({ error: 'Validation error', details: ['Invalid filter parameters.'] });
+    // Validate parameters
+    const validation = validateFilterParameters(queryParams);
+    if (!validation.isValid) {
+      return res.status(400).json({ error: 'Validation error', details: validation.details });
     }
 
-    if (usager) {
-      where.USEN_ID = Number(usager);
-    }
-    if (logement) {
-      where.ACCN_ID = Number(logement);
-    }
-    if (dateStart && dateEnd) {
-      where.EVED_START = {
-        gte: new Date(dateStart as string),
-        lte: new Date(dateEnd as string),
-      };
-    } else if (dateStart) {
-      where.EVED_START = {
-        gte: new Date(dateStart as string),
-      };
-    } else if (dateEnd) {
-      where.EVED_START = {
-        lte: new Date(dateEnd as string),
-      };
-    }
+    // Build filters
+    const where = buildEventFilters(queryParams);
 
+    // Query database with filters
     const events = await prisma.event.findMany({ where });
     res.status(200).json(sanitizeEvents(events));
   } catch (error) {
-    handleError(res, 'Error while retrieving filtered events.');
+    handleError(res, 'Error while retrieving filtered events.', error);
   }
 };
 
@@ -174,7 +225,7 @@ export const getEventById = async (req: Request, res: Response) => {
     }
     res.status(200).json(sanitizeEvent(event));
   } catch (error) {
-    handleError(res, 'Error while retrieving the event.');
+    handleError(res, 'Error while retrieving the event.', error);
   }
 };
 
@@ -490,7 +541,7 @@ export const createEvent = async (req: Request, res: Response) => {
     });
     res.status(201).json(responseObject);
   } catch (error) {
-    handleError(res, 'Error while creating the event.');
+    handleError(res, 'Error while creating the event.', error);
   }
 };
 
@@ -545,7 +596,7 @@ export const updateEvent = async (req: Request, res: Response) => {
     const responseObject = shapeUpdateEventResponse(req, sanitizedEvent, { hasIso, hasSplit });
     res.status(200).json(responseObject);
   } catch (error) {
-    handleError(res, 'Error while updating the event.');
+    handleError(res, 'Error while updating the event.', error);
   }
 };
 
@@ -562,6 +613,6 @@ export const deleteEvent = async (req: Request, res: Response) => {
     await prisma.event.delete({ where: { EVEN_ID: eventId } });
     res.status(200).json({ message: 'Event deleted.' });
   } catch (error) {
-    handleError(res, 'Error while deleting the event.');
+    handleError(res, 'Error while deleting the event.', error);
   }
 };

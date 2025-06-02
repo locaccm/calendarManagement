@@ -1,10 +1,10 @@
 import axios from 'axios';
 import { Request, Response, NextFunction } from 'express';
 
-// Middleware d'autorisation via API centrale
+// Authorization middleware via central API
 type AuthorizeApiOptions = {
   rightName: string;
-  apiUrl?: string; // Permet de surcharger l'URL de l'API si besoin
+  apiUrl?: string; // Optional override for the API URL if needed
 };
 
 // Use an environment variable for the central access API URL
@@ -15,6 +15,69 @@ function extractToken(req: Request): string | undefined {
   return req.header('Authorization')?.replace('Bearer ', '') ?? req.header('X-Access-Token');
 }
 
+// Handle test tokens with predefined behaviors
+function handleTestToken(token: string, res: Response, next: NextFunction) {
+  if (token === 'test-token') return { handled: true, result: next() };
+  if (token === 'forbidden-token') {
+    return {
+      handled: true,
+      result: res.status(403).json({ error: 'Access denied by central policy' }),
+    };
+  }
+  if (token === 'error-token') {
+    return {
+      handled: true,
+      result: res.status(500).json({ error: 'Error during access verification' }),
+    };
+  }
+  return { handled: false };
+}
+
+// Process mock API calls in test environment
+async function handleMockApiCall(
+  mockPost: any,
+  url: string,
+  token: string,
+  rightName: string,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!mockPost || typeof mockPost !== 'function') {
+    return { handled: false };
+  }
+
+  try {
+    const mockResult = await mockPost(url, { token, rightName });
+    if (mockResult && (mockResult.status === 201 || mockResult.status === 200)) {
+      return { handled: true, result: next() };
+    }
+    return {
+      handled: true,
+      result: res.status(403).json({ error: 'Access denied by central policy' }),
+    };
+  } catch (mockErr: any) {
+    // Handle specific error cases
+    if (mockErr.response && mockErr.response.status === 403) {
+      return {
+        handled: true,
+        result: res.status(403).json({ error: 'Access denied by central policy' }),
+      };
+    }
+    if (mockErr instanceof Error && mockErr.message === 'API down') {
+      return {
+        handled: true,
+        result: res.status(500).json({ error: 'Error during access verification' }),
+      };
+    }
+    // For any other error, return server error
+    return {
+      handled: true,
+      result: res.status(500).json({ error: 'Error during access verification' }),
+    };
+  }
+}
+
+// Main test authorization handler that combines token and mock API handling
 async function handleTestAuthorization(
   token: string,
   mockPost: any,
@@ -23,35 +86,19 @@ async function handleTestAuthorization(
   res: Response,
   next: NextFunction,
 ) {
-  if (token === 'test-token') return next();
-  if (typeof mockPost === 'function' && token === 'forbidden-token') {
-    return res.status(403).json({ error: 'Access denied by central policy' });
-  }
-  if (typeof mockPost === 'function' && token === 'error-token') {
-    return res.status(500).json({ error: 'Error during access verification' });
-  }
-  if (mockPost && typeof mockPost === 'function') {
-    try {
-      const mockResult = await mockPost(url, { token, rightName });
-      if (mockResult && (mockResult.status === 201 || mockResult.status === 200)) {
-        return next();
-      }
-      return res.status(403).json({ error: 'Access denied by central policy' });
-    } catch (mockErr: any) {
-      if (mockErr.response && mockErr.response.status === 403) {
-        return res.status(403).json({ error: 'Access denied by central policy' });
-      }
-      if (mockErr instanceof Error && mockErr.message === 'API down') {
-        return res.status(500).json({ error: 'Error during access verification' });
-      }
-      // For any other error, return server error
-      return res.status(500).json({ error: 'Error during access verification' });
-    }
-  }
+  // First check for special test tokens
+  const tokenResult = handleTestToken(token, res, next);
+  if (tokenResult.handled) return tokenResult.result;
+
+  // Then try mock API if available
+  const mockResult = await handleMockApiCall(mockPost, url, token, rightName, res, next);
+  if (mockResult.handled) return mockResult.result;
+
   return null; // Not handled by test/mocking logic
 }
 
-async function authorizeViaApi(
+// Helper to call central API for authorization
+async function callApiAuthorization(
   url: string,
   token: string,
   rightName: string,
@@ -97,29 +144,4 @@ export function authorizeWithApi({ rightName, apiUrl }: AuthorizeApiOptions) {
 // Helper to handle missing token response
 function handleMissingToken(res: Response) {
   return res.status(401).json({ error: 'Token missing' });
-}
-
-// Helper to call central API for authorization
-async function callApiAuthorization(
-  url: string,
-  token: string,
-  rightName: string,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
-    await axios.post(url, { token, rightName });
-    return next();
-  } catch (err: any) {
-    if (err.response) {
-      if (err.response.status === 403) {
-        return res.status(403).json({ error: 'Access denied by central policy' });
-      }
-      if (err.response.status === 401) {
-        return res.status(401).json({ error: 'Not authenticated (Central API)' });
-      }
-    }
-    // For any other error, return server error
-    return res.status(500).json({ error: 'Error during access verification' });
-  }
 }
