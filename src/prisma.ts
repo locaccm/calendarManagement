@@ -89,11 +89,11 @@ export const __TEST_ONLY__ = {
     (global as any).__prismaClient = mockClient;
     return mockClient;
   },
-  getClient: () => (global as any).__prismaClient || prisma,
+  getClient: () => (global as any).__prismaClient ?? prisma,
 };
 
 // Export a getter that will check for a test override before returning the real client
 const prismaClient =
-  process.env.NODE_ENV === 'test' ? (global as any).__prismaClient || prisma : prisma;
+  process.env.NODE_ENV === 'test' ? ((global as any).__prismaClient ?? prisma) : prisma;
 
 export default prismaClient;
