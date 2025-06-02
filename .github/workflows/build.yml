@@ -25,20 +25,21 @@ jobs:
         run: npm install  
 
       - name: Set Database URL
-        run: echo "DATABASE_URL=${ secrets.DATABASE_URL }" >> $GITHUB_ENV
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
       - name: Verify DATABASE_URL
-        run: echo "DATABASE_URL is set"
+        run: echo "DATABASE_URL is set to $DATABASE_URL"
 
       - name: Run tests with coverage
         env:
-          DATABASE_URL: ${ secrets.DATABASE_URL }
-        run: npm run test -- --coverage --coverageReporters=lcov --detectOpenHandles
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run test -- --coverage --coverageReporters=lcov
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v4
         env:
-          SONAR_TOKEN: ${ secrets.SONAR_TOKEN }
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   eslint:
     name: ESLint Check
@@ -55,4 +56,4 @@ jobs:
         run: npm install
 
       - name: Run ESLint
-        run: npx eslint . --fix
+        run: npx eslint .
