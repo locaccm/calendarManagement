@@ -595,9 +595,11 @@ describe('Event Controller Unit Tests', () => {
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Validation error'
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation error',
+        }),
+      );
     });
 
     it('should handle invalid accommodation ID format', async () => {
@@ -610,9 +612,11 @@ describe('Event Controller Unit Tests', () => {
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Validation error'
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation error',
+        }),
+      );
     });
 
     it('should handle invalid date format', async () => {
@@ -625,9 +629,11 @@ describe('Event Controller Unit Tests', () => {
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Validation error'
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation error',
+        }),
+      );
     });
 
     it('should handle database errors', async () => {
@@ -642,14 +648,16 @@ describe('Event Controller Unit Tests', () => {
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Error while retrieving filtered events.' });
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Error while retrieving filtered events.',
+      });
     });
   });
 
   describe('getEventById tests', () => {
     it('should return a sanitized event', async () => {
       mockRequest.params = { id: '1' };
-      
+
       const mockEventData = {
         EVEN_ID: 1,
         EVEC_LIB: 'Test Event',
@@ -658,36 +666,36 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       prismaClientMock.event.findUnique.mockResolvedValue(mockEventData);
-      
+
       await getEventById(mockRequest as Request, mockResponse as Response);
-      
+
       expect(prismaClientMock.event.findUnique).toHaveBeenCalledWith({
-        where: { EVEN_ID: 1 }
+        where: { EVEN_ID: 1 },
       });
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalled();
     });
-    
+
     it('should handle invalid ID format', async () => {
       mockRequest.params = { id: 'abc' }; // Invalid ID format
-      
+
       await getEventById(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(404);
       expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Event not found.' });
     });
-    
+
     it('should handle database errors', async () => {
       mockRequest.params = { id: '1' };
-      
+
       prismaClientMock.event.findUnique.mockRejectedValue(new Error('Database error'));
-      
+
       await getEventById(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({ 
+      expect(mockResponse.json).toHaveBeenCalledWith({
         error: 'Error while retrieving the event.',
       });
     });
@@ -698,39 +706,45 @@ describe('Event Controller Unit Tests', () => {
     it('should handle database errors properly', async () => {
       // Setup mock request with valid query parameters
       mockRequest.query = {};
-      
+
       // Mock database error
       prismaClientMock.event.findMany.mockRejectedValue(new Error('Database connection failed'));
-      
+
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Error while retrieving filtered events.' });
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Error while retrieving filtered events.',
+      });
     });
-    
+
     it('should handle invalid accommodation ID format', async () => {
       mockRequest.query = { logement: 'invalid-uuid-format' };
-      
+
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Validation error',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation error',
+        }),
+      );
     });
-    
+
     it('should handle invalid user ID format', async () => {
       mockRequest.query = { usager: 'invalid-uuid-format' };
-      
+
       await getFilteredEvents(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Validation error',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Validation error',
+        }),
+      );
     });
   });
-  
+
   // Extended tests for createEvent
   describe('createEvent additional coverage', () => {
     it('should handle successful event creation', async () => {
@@ -742,7 +756,7 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       mockRequest.body = {
         EVEC_LIB: 'New Test Event',
         EVED_START: '2025-06-01T10:00:00Z',
@@ -750,18 +764,20 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       prismaClientMock.event.create.mockResolvedValue(mockCreatedEvent);
-      
+
       await createEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        EVEN_ID: 1,
-        EVEC_LIB: 'New Test Event',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          EVEN_ID: 1,
+          EVEC_LIB: 'New Test Event',
+        }),
+      );
     });
-    
+
     it('should handle database errors during creation', async () => {
       mockRequest.body = {
         EVEC_LIB: 'New Test Event',
@@ -770,18 +786,20 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       prismaClientMock.event.create.mockRejectedValue(new Error('Database error'));
-      
+
       await createEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Error while creating the event.',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while creating the event.',
+        }),
+      );
     });
   });
-  
+
   // Extended tests for updateEvent
   describe('updateEvent additional coverage', () => {
     it('should handle successful event update', async () => {
@@ -793,28 +811,30 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       const updatedEvent = {
         ...existingEvent,
         EVEC_LIB: 'Updated Event Title',
       };
-      
+
       mockRequest.params = { id: '1' };
       mockRequest.body = {
         EVEC_LIB: 'Updated Event Title',
       };
-      
+
       prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
       prismaClientMock.event.update.mockResolvedValue(updatedEvent);
-      
+
       await updateEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.any(String),
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(String),
+        }),
+      );
     });
-    
+
     it('should handle database errors during update', async () => {
       const existingEvent = {
         EVEN_ID: 1,
@@ -824,24 +844,26 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       mockRequest.params = { id: '1' };
       mockRequest.body = {
         EVEC_LIB: 'Updated Event Title',
       };
-      
+
       prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
       prismaClientMock.event.update.mockRejectedValue(new Error('Database error'));
-      
+
       await updateEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: expect.any(String),
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(String),
+        }),
+      );
     });
   });
-  
+
   // Extended tests for deleteEvent
   describe('deleteEvent additional coverage', () => {
     it('should handle successful event deletion', async () => {
@@ -853,20 +875,22 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       mockRequest.params = { id: '1' };
-      
+
       prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
       prismaClientMock.event.delete.mockResolvedValue(existingEvent);
-      
+
       await deleteEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        message: 'Event deleted.',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Event deleted.',
+        }),
+      );
     });
-    
+
     it('should handle database errors during deletion', async () => {
       const existingEvent = {
         EVEN_ID: 1,
@@ -876,18 +900,20 @@ describe('Event Controller Unit Tests', () => {
         USEN_ID: 1,
         ACCN_ID: 1,
       };
-      
+
       mockRequest.params = { id: '1' };
-      
+
       prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
       prismaClientMock.event.delete.mockRejectedValue(new Error('Database error'));
-      
+
       await deleteEvent(mockRequest as Request, mockResponse as Response);
-      
+
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
-        error: 'Error while deleting the event.',
-      }));
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while deleting the event.',
+        }),
+      );
     });
   });
 });
