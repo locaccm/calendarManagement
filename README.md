@@ -259,15 +259,44 @@ npm run prettier
 
 The API uses several security mechanisms:
 
-- **Access API Integration**: Authentication and authorization via an Access API
+- **Access API Integration**: Authentication and authorization via a centralized Access API
 - **CORS**: Basic CORS configuration as specified in environment variables
 - **Input Validation**: Strict verification of received data
 - **Error Handling**: Secure error messages without disclosure of sensitive information
 
 ### Access API Integration
 
-The Calendar Management API does not handle authentication directly. Instead, it relies on an Access API to verify user rights. Each request to a protected endpoint is validated by making a call to the Access API URL specified in the `ACCESS_API_URL` environment variable.
+#### Overview
+
+The Calendar Management API uses a robust authorization system that delegates access control to a centralized Access API. This approach follows the separation of concerns principle, allowing the Calendar API to focus on its core functionality while the Access API handles all authorization decisions.
+
+#### How It Works
+
+1. **Authorization Flow**:
+   - When a request is made to a protected endpoint, the `authorizeWithApi` middleware intercepts it
+   - The middleware extracts the access token from either:
+     - The `Authorization` header (format: `Bearer <token>`)
+     - The `X-Access-Token` header (alternative method)
+   - The middleware then calls the Access API with the token and the required right name
+   - The Access API validates the token and checks if the user has the required right
+   - Based on the Access API response, the request is either allowed to proceed or rejected
+
+2. **Right-Based Authorization**:
+   - Each endpoint is protected by a specific right name (e.g., `createEvent`, `getEvents`, `updateEvent`)
+   - The right name is passed to the Access API along with the token
+   - This allows for fine-grained access control at the endpoint level
+
+3. **Configuration**:
+   - The Access API URL is configured via the `ACCESS_API_URL` environment variable
+   - Default fallback URL: `http://localhost:4000/access/check`
+   - Each middleware can optionally override the API URL if needed
+
+4. **Error Handling**:
+   - 401 Unauthorized: Returned when no token is provided
+   - 403 Forbidden: Returned when the Access API denies access
+   - 500 Internal Server Error: Returned when there's an issue communicating with the Access API
 
 ## 👤 Author
 
+Dynastie AMOUSSOU
 LocaTech CCM Master's Project
