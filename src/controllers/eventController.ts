@@ -100,22 +100,24 @@ interface TimeSlot {
   end: string;
 }
 
-// Enhanced error handling with detailed logging
+// Enhanced error handling with logging only in non-production environments
 function handleError(res: Response, message: string, error?: unknown) {
-  // Log the detailed error for server-side debugging
-  if (error) {
-    const errorDetail = error instanceof Error ? error.message : String(error);
-    console.error(`${message} Details:`, errorDetail);
+  // Only log errors in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    if (error) {
+      const errorDetail = error instanceof Error ? error.message : String(error);
+      console.error(`${message} Details:`, errorDetail);
 
-    // Optionally include a stack trace in non-production environments
-    if (error instanceof Error && error.stack && process.env.NODE_ENV !== 'production') {
-      console.error('Stack trace:', error.stack);
+      // Include stack trace for better debugging in development
+      if (error instanceof Error && error.stack) {
+        console.error('Stack trace:', error.stack);
+      }
+    } else {
+      console.error(message);
     }
-  } else {
-    console.error(message);
   }
 
-  // Send a standardized error response to the client
+  // Always send a standardized error response to the client
   res.status(500).json({ error: message });
 }
 
@@ -339,25 +341,45 @@ function suggestAlternativeSlots(
   return suggestions;
 }
 
-// --- Helper functions for createEvent complexity reduction ---
-// Validates required fields and formats for event creation and update
-function validateRequiredEventFields(
-  body: any,
-  invalidDateStatus: number = 400,
-): { status: number; details: string[] } | null {
-  // 1. Check required fields
+// --- Helper functions for validateRequiredEventFields complexity reduction ---
+// Validate required basic fields (title, user ID, accommodation ID)
+function validateBasicFields(body: any): { status: number; details: string[] } | null {
   if (!body.EVEC_LIB || !body.USEN_ID || !body.ACCN_ID) {
     return {
       status: 400,
       details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
     };
   }
+  return null;
+}
 
-  // 2. Accept either ISO dates or split date/time fields
-  const hasIso = body.EVED_START && body.EVED_END;
-  const hasSplit = body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME;
-  const hasAltSplit = body.date && body.startTime && body.endTime;
+// Determine which date format the request is using
+function detectDateFormat(body: any): { hasIso: boolean; hasSplit: boolean; hasAltSplit: boolean } {
+  return {
+    hasIso: Boolean(body.EVED_START && body.EVED_END),
+    hasSplit: Boolean(body.DATE_START && body.START_TIME && body.DATE_END && body.END_TIME),
+    hasAltSplit: Boolean(body.date && body.startTime && body.endTime),
+  };
+}
+
+// Validate that at least one date format is provided
+function validateDateFormatPresence(
+  body: any,
+  formats: { hasIso: boolean; hasSplit: boolean; hasAltSplit: boolean },
+): { status: number; details: string[] } | null {
+  const { hasIso, hasSplit, hasAltSplit } = formats;
+
   if (!hasIso && !hasSplit && !hasAltSplit) {
+    // Special case for updateEvent: different error message
+    if (body._updateEvent) {
+      return {
+        status: 400,
+        details: [
+          'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
+        ],
+      };
+    }
+
     return {
       status: 400,
       details: [
@@ -365,50 +387,89 @@ function validateRequiredEventFields(
       ],
     };
   }
-  // Special case for updateEvent: English error message
-  if (body._updateEvent && !hasIso && !hasSplit && !hasAltSplit) {
+
+  return null;
+}
+
+// Validate ISO format dates
+function validateIsoFormat(
+  body: any,
+  hasIso: boolean,
+  invalidDateStatus: number,
+): { status: number; details: string[] } | null {
+  if (hasIso && (!isValidISODate(body.EVED_START) || !isValidISODate(body.EVED_END))) {
     return {
-      status: 400,
-      details: [
-        'You must provide either DATE_START/START_TIME/DATE_END/END_TIME fields, or EVED_START/EVED_END fields.',
-      ],
+      status: invalidDateStatus,
+      details: ['Invalid ISO date format for EVED_START or EVED_END.'],
     };
   }
+  return null;
+}
 
-  // 3. Validate ISO format
-  if (hasIso) {
-    if (!isValidISODate(body.EVED_START) || !isValidISODate(body.EVED_END)) {
-      return {
-        status: invalidDateStatus,
-        details: ['Invalid ISO date format for EVED_START or EVED_END.'],
-      };
-    }
-  }
-
-  // 4. Validate split format
-  if (hasSplit) {
-    if (
-      !isValidDate(body.DATE_START) ||
+// Validate split date/time format
+function validateSplitFormat(
+  body: any,
+  hasSplit: boolean,
+  invalidDateStatus: number,
+): { status: number; details: string[] } | null {
+  if (
+    hasSplit &&
+    (!isValidDate(body.DATE_START) ||
       !isValidDate(body.DATE_END) ||
       !isValidTime(body.START_TIME) ||
-      !isValidTime(body.END_TIME)
-    ) {
-      return {
-        status: invalidDateStatus,
-        details: ['DATE_START, START_TIME, DATE_END or END_TIME is invalid.'],
-      };
-    }
+      !isValidTime(body.END_TIME))
+  ) {
+    return {
+      status: invalidDateStatus,
+      details: ['DATE_START, START_TIME, DATE_END or END_TIME is invalid.'],
+    };
   }
+  return null;
+}
 
-  // 5. Validate alt split format
-  if (hasAltSplit) {
-    if (!isValidDate(body.date) || !isValidTime(body.startTime) || !isValidTime(body.endTime)) {
-      return {
-        status: invalidDateStatus,
-        details: ['date, startTime or endTime is invalid.'],
-      };
-    }
+// Validate alternative split date/time format
+function validateAltSplitFormat(
+  body: any,
+  hasAltSplit: boolean,
+  invalidDateStatus: number,
+): { status: number; details: string[] } | null {
+  if (
+    hasAltSplit &&
+    (!isValidDate(body.date) || !isValidTime(body.startTime) || !isValidTime(body.endTime))
+  ) {
+    return {
+      status: invalidDateStatus,
+      details: ['date, startTime or endTime is invalid.'],
+    };
   }
+  return null;
+}
+
+// Main validation function with reduced complexity
+function validateRequiredEventFields(
+  body: any,
+  invalidDateStatus: number = 400,
+): { status: number; details: string[] } | null {
+  // 1. Check required fields
+  const basicFieldsValidation = validateBasicFields(body);
+  if (basicFieldsValidation) return basicFieldsValidation;
+
+  // 2. Detect which date format is being used
+  const formats = detectDateFormat(body);
+
+  // 3. Ensure at least one date format is provided
+  const dateFormatValidation = validateDateFormatPresence(body, formats);
+  if (dateFormatValidation) return dateFormatValidation;
+
+  // 4. Validate the date formats that are present
+  const isoValidation = validateIsoFormat(body, formats.hasIso, invalidDateStatus);
+  if (isoValidation) return isoValidation;
+
+  const splitValidation = validateSplitFormat(body, formats.hasSplit, invalidDateStatus);
+  if (splitValidation) return splitValidation;
+
+  const altSplitValidation = validateAltSplitFormat(body, formats.hasAltSplit, invalidDateStatus);
+  if (altSplitValidation) return altSplitValidation;
 
   // All good
   return null;
