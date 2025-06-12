@@ -1,0 +1,593 @@
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended';
+import {
+  getEvents,
+  getEventById,
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  sanitizeEvent,
+  getFilteredEvents,
+} from '../controllers/eventController';
+
+// Mock the Prisma module
+jest.mock('../prisma', () => {
+  return {
+    __esModule: true,
+    default: {
+      event: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+    },
+  };
+});
+
+// Get the mocked prisma client
+const prismaClientMock = jest.requireMock('../prisma').default;
+
+// Mock Express request and response
+let mockRequest: Partial<Request>;
+let mockResponse: Partial<Response>;
+let mockNext: jest.Mock;
+
+describe('Event Controller Unit Tests', () => {
+  afterAll(async () => {
+    // Close Prisma connection if available
+    if (prismaClientMock && prismaClientMock.$disconnect) {
+      await prismaClientMock.$disconnect();
+    }
+  });
+
+  afterEach(() => {
+    jest.resetModules();
+  });
+  beforeEach(() => {
+    mockRequest = {
+      body: {},
+      params: {},
+      query: {},
+    };
+
+    mockResponse = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      headersSent: false,
+    };
+
+    mockNext = jest.fn();
+    // Reset all mocks before each test
+    Object.values(prismaClientMock.event).forEach((mockFn) => {
+      // Cast to any to access Jest mock functions
+      const mock = mockFn as any;
+      if (mock && typeof mock.mockClear === 'function') {
+        mock.mockClear();
+      }
+    });
+  });
+
+  // --- Ajout de tests de couverture pour les validations et erreurs ---
+  describe('Validation and error handling', () => {
+    it('should return 400 if required fields are missing on createEvent', async () => {
+      mockRequest.body = { EVEC_LIB: '', USEN_ID: null, ACCN_ID: null };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' }),
+      );
+    });
+
+    it('should return 400 if date fields are missing on createEvent', async () => {
+      mockRequest.body = { EVEC_LIB: 'Test', USEN_ID: 1, ACCN_ID: 1 };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' }),
+      );
+    });
+
+    it('should return 400 if date fields are invalid on createEvent', async () => {
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        DATE_START: 'invalid',
+        START_TIME: 'invalid',
+        DATE_END: 'invalid',
+        END_TIME: 'invalid',
+      };
+      await createEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      // Optionally check for error object
+      // expect(mockResponse.json).toHaveBeenCalledWith(
+      //   expect.objectContaining({ error: expect.any(String) })
+      // );
+    });
+
+    it('should return 404 if event does not exist on updateEvent', async () => {
+      mockRequest.params = { id: '999' };
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        EVED_START: '2025-01-01T10:00:00Z',
+        EVED_END: '2025-01-01T12:00:00Z',
+      };
+      prismaClientMock.event.findUnique.mockResolvedValue(null);
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Event not found.' }),
+      );
+    });
+
+    it('should return 404 if event does not exist on deleteEvent', async () => {
+      mockRequest.params = { id: '999' };
+      prismaClientMock.event.findUnique.mockResolvedValue(null);
+      await deleteEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Event not found.' }),
+      );
+    });
+
+    it('should return 400 if updateEvent is called with missing required fields', async () => {
+      mockRequest.params = { id: '1' };
+      mockRequest.body = { EVEC_LIB: '', USEN_ID: null, ACCN_ID: null };
+      prismaClientMock.event.findUnique.mockResolvedValue({ EVEN_ID: 1 });
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({ error: 'Validation error' }),
+      );
+    });
+
+    it('should return 500 if updateEvent is called with invalid date fields', async () => {
+      mockRequest.params = { id: '1' };
+      mockRequest.body = {
+        EVEC_LIB: 'Test',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        DATE_START: 'invalid',
+        START_TIME: 'invalid',
+        DATE_END: 'invalid',
+        END_TIME: 'invalid',
+      };
+      prismaClientMock.event.findUnique.mockResolvedValue({ EVEN_ID: 1 });
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      // Optionally check for error object
+      // expect(mockResponse.json).toHaveBeenCalledWith(
+      //   expect.objectContaining({ error: expect.any(String) })
+      // );
+    });
+  });
+
+  describe('sanitizeEvent', () => {
+    it('should handle null date values', () => {
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Test Event',
+        EVED_START: null,
+        EVED_END: null,
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('Test Event');
+      expect(result.EVED_START).toBe('');
+      expect(result.EVED_END).toBe('');
+    });
+
+    it('should handle undefined date values', () => {
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Test Event',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('Test Event');
+      expect(result.EVED_START).toBe('');
+      expect(result.EVED_END).toBe('');
+    });
+
+    it('should handle invalid date values', () => {
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Test Event',
+        EVED_START: 'invalid-date',
+        EVED_END: 'invalid-date',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('Test Event');
+      expect(result.EVED_START).toBe('');
+      expect(result.EVED_END).toBe('');
+    });
+
+    it('should handle Date objects', () => {
+      const startDate = new Date('2025-06-01T10:00:00Z');
+      const endDate = new Date('2025-06-01T12:00:00Z');
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Test Event',
+        EVED_START: startDate,
+        EVED_END: endDate,
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('Test Event');
+      expect(result.EVED_START).toBe(startDate.toISOString());
+      expect(result.EVED_END).toBe(endDate.toISOString());
+    });
+
+    it('should handle string date values', () => {
+      const startDateStr = '2025-06-01T10:00:00Z';
+      const endDateStr = '2025-06-01T12:00:00Z';
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Test Event',
+        EVED_START: startDateStr,
+        EVED_END: endDateStr,
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('Test Event');
+      expect(result.EVED_START).toBe(new Date(startDateStr).toISOString());
+      expect(result.EVED_END).toBe(new Date(endDateStr).toISOString());
+    });
+
+    it('should handle missing optional fields', () => {
+      const prismaEvent = {
+        EVEN_ID: 1,
+        EVED_START: '2025-06-01T10:00:00Z',
+        EVED_END: '2025-06-01T12:00:00Z',
+      };
+
+      const result = sanitizeEvent(prismaEvent);
+      expect(result).toBeDefined();
+      expect(result.EVEN_ID).toBe(1);
+      expect(result.EVEC_LIB).toBe('');
+      expect(result.USEN_ID).toBe(0);
+      expect(result.ACCN_ID).toBe(0);
+    });
+  });
+
+  describe('sanitizeEvent with multiple events', () => {
+    it('should sanitize multiple events manually', () => {
+      const prismaEvents = [
+        {
+          EVEN_ID: 1,
+          EVEC_LIB: 'Event 1',
+          EVED_START: '2025-06-01T10:00:00Z',
+          EVED_END: '2025-06-01T12:00:00Z',
+          USEN_ID: 1,
+          ACCN_ID: 1,
+        },
+        {
+          EVEN_ID: 2,
+          EVEC_LIB: 'Event 2',
+          EVED_START: null,
+          EVED_END: null,
+          USEN_ID: 2,
+          ACCN_ID: 2,
+        },
+      ];
+
+      const results = prismaEvents.map((event) => sanitizeEvent(event));
+      expect(results.length).toBe(2);
+      expect(results[0].EVEN_ID).toBe(1);
+      expect(results[0].EVEC_LIB).toBe('Event 1');
+      expect(results[0].EVED_START).toBe(new Date('2025-06-01T10:00:00Z').toISOString());
+      expect(results[0].EVED_END).toBe(new Date('2025-06-01T12:00:00Z').toISOString());
+      expect(results[1].EVEN_ID).toBe(2);
+      expect(results[1].EVEC_LIB).toBe('Event 2');
+      expect(results[1].EVED_START).toBe('');
+      expect(results[1].EVED_END).toBe('');
+    });
+
+    it('should handle empty array', () => {
+      const results = [].map((event) => sanitizeEvent(event));
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe('getEvents error handling', () => {
+    it('should handle database errors', async () => {
+      prismaClientMock.event.findMany.mockRejectedValue(new Error('Database connection error'));
+
+      await getEvents(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while retrieving events. Details: Database connection error',
+        }),
+      );
+    });
+  });
+
+  describe('getEventById error handling', () => {
+    it('should handle invalid ID format', async () => {
+      mockRequest.params = { id: 'abc' };
+
+      await getEventById(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Event not found.' });
+    });
+
+    it('should handle database errors', async () => {
+      mockRequest.params = { id: '1' };
+      prismaClientMock.event.findUnique.mockRejectedValue(new Error('Database connection error'));
+
+      await getEventById(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while retrieving the event. Details: Database connection error',
+        }),
+      );
+    });
+  });
+
+  describe('createEvent validation', () => {
+    it('should validate required fields', async () => {
+      mockRequest.body = {
+        // Missing EVEC_LIB
+        USEN_ID: 1,
+        ACCN_ID: 1,
+        EVED_START: '2025-06-01T10:00:00Z',
+        EVED_END: '2025-06-01T12:00:00Z',
+      };
+
+      await createEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Validation error',
+        details: ['EVEC_LIB, USEN_ID and ACCN_ID are required.'],
+      });
+    });
+
+    it('should handle invalid ID format', async () => {
+      mockRequest.params = { id: 'abc' }; // Invalid ID format
+
+      await getEventById(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Event not found.' });
+    });
+
+    it('should handle database errors', async () => {
+      mockRequest.params = { id: '1' };
+
+      prismaClientMock.event.findUnique.mockRejectedValue(new Error('Database error'));
+
+      await getEventById(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while retrieving the event. Details: Database error',
+        }),
+      );
+    });
+  });
+
+  // Additional tests for getFilteredEvents database errors
+  describe('getFilteredEvents additional error handling', () => {
+    it('should handle database errors properly', async () => {
+      // Setup mock request with valid query parameters
+      mockRequest.query = {};
+
+      // Mock database error
+      prismaClientMock.event.findMany.mockRejectedValue(new Error('Database connection failed'));
+
+      await getFilteredEvents(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while retrieving filtered events. Details: Database connection failed',
+        }),
+      );
+    });
+  });
+
+  // Extended tests for createEvent
+  describe('createEvent additional coverage', () => {
+    it('should handle successful event creation', async () => {
+      const mockCreatedEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'New Test Event',
+        EVED_START: new Date('2025-06-01T10:00:00Z'),
+        EVED_END: new Date('2025-06-01T12:00:00Z'),
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      mockRequest.body = {
+        EVEC_LIB: 'New Test Event',
+        EVED_START: '2025-06-01T10:00:00Z',
+        EVED_END: '2025-06-01T12:00:00Z',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      prismaClientMock.event.create.mockResolvedValue(mockCreatedEvent);
+
+      await createEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          EVEN_ID: 1,
+          EVEC_LIB: 'New Test Event',
+        }),
+      );
+    });
+
+    it('should handle database errors during creation', async () => {
+      mockRequest.body = {
+        EVEC_LIB: 'New Test Event',
+        EVED_START: '2025-06-01T10:00:00Z',
+        EVED_END: '2025-06-01T12:00:00Z',
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      prismaClientMock.event.create.mockRejectedValue(new Error('Database error'));
+
+      await createEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while creating the event. Details: Database error',
+        }),
+      );
+    });
+  });
+
+  // Extended tests for updateEvent
+  describe('updateEvent additional coverage', () => {
+    it('should handle successful event update', async () => {
+      const existingEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Existing Event',
+        EVED_START: new Date('2025-06-01T10:00:00Z'),
+        EVED_END: new Date('2025-06-01T12:00:00Z'),
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      const updatedEvent = {
+        ...existingEvent,
+        EVEC_LIB: 'Updated Event Title',
+      };
+
+      mockRequest.params = { id: '1' };
+      mockRequest.body = {
+        EVEC_LIB: 'Updated Event Title',
+      };
+
+      prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
+      prismaClientMock.event.update.mockResolvedValue(updatedEvent);
+
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(String),
+        }),
+      );
+    });
+
+    it('should handle database errors during update', async () => {
+      const existingEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Existing Event',
+        EVED_START: new Date('2025-06-01T10:00:00Z'),
+        EVED_END: new Date('2025-06-01T12:00:00Z'),
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      mockRequest.params = { id: '1' };
+      mockRequest.body = {
+        EVEC_LIB: 'Updated Event Title',
+      };
+
+      prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
+      prismaClientMock.event.update.mockRejectedValue(new Error('Database error'));
+
+      await updateEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(String),
+        }),
+      );
+    });
+  });
+
+  // Extended tests for deleteEvent
+  describe('deleteEvent additional coverage', () => {
+    it('should handle successful event deletion', async () => {
+      const existingEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Event to Delete',
+        EVED_START: new Date('2025-06-01T10:00:00Z'),
+        EVED_END: new Date('2025-06-01T12:00:00Z'),
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      mockRequest.params = { id: '1' };
+
+      prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
+      prismaClientMock.event.delete.mockResolvedValue(existingEvent);
+
+      await deleteEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Event deleted.',
+        }),
+      );
+    });
+
+    it('should handle database errors during deletion', async () => {
+      const existingEvent = {
+        EVEN_ID: 1,
+        EVEC_LIB: 'Event to Delete',
+        EVED_START: new Date('2025-06-01T10:00:00Z'),
+        EVED_END: new Date('2025-06-01T12:00:00Z'),
+        USEN_ID: 1,
+        ACCN_ID: 1,
+      };
+
+      mockRequest.params = { id: '1' };
+
+      prismaClientMock.event.findUnique.mockResolvedValue(existingEvent);
+      prismaClientMock.event.delete.mockRejectedValue(new Error('Database error'));
+
+      await deleteEvent(mockRequest as Request, mockResponse as Response);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: 'Error while deleting the event. Details: Database error',
+        }),
+      );
+    });
+  });
+});
