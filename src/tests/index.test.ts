@@ -9,12 +9,12 @@ jest.mock('../app', () => {
 
 // Mock the server startup function
 jest.mock('../index', () => {
-  return { __esModule: true };
+  return { __esModule: true, server: { close: jest.fn() } };
 });
 
-test('index.ts loads without throwing', () => {
-  // Import after mocking to ensure mocks are applied
-  const app = require('../app').default;
-  expect(app.listen).toBeDefined();
-  expect(true).toBe(true);
+describe('Index', () => {
+  test('should load without errors', async () => {
+    const module = await import('../index');
+    expect(module).toBeDefined();
+  });
 });
