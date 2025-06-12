@@ -32,7 +32,6 @@ if (!isCoverageTest) {
       throw new Error(
         `DATABASE_URL has an invalid format: ${process.env.DATABASE_URL.substring(0, 10)}... Expected format: postgresql://user:password@host:port/database`,
       );
-      throw new Error('Invalid DATABASE_URL format. Please check your environment configuration.');
     }
   }
 }
@@ -70,9 +69,6 @@ const createPrismaClient = (): PrismaClient => {
   } catch (error: any) {
     throw new Error(
       `Failed to initialize Prisma Client: ${error.message}. Environment: ${environment}`,
-    );
-    throw new Error(
-      `Prisma Client initialization failed: ${error.message}. Check your environment variables and database configuration.`,
     );
   }
 };

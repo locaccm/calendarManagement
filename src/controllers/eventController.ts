@@ -102,7 +102,7 @@ interface TimeSlot {
 }
 
 // Enhanced error handling with logging only in non-production environments
-function handleError(res: Response, message: string, error?: unknown) {
+export function handleError(res: Response, message: string, error?: unknown) {
   // Only log errors in non-production environments
   if (process.env.NODE_ENV !== 'production') {
     if (error) {
@@ -171,16 +171,16 @@ function buildEventFilters(params: {
   // Handle date filters
   if (dateStart && dateEnd) {
     where.EVED_START = {
-      gte: new Date(dateStart as string),
-      lte: new Date(dateEnd as string),
+      gte: new Date(dateStart),
+      lte: new Date(dateEnd),
     };
   } else if (dateStart) {
     where.EVED_START = {
-      gte: new Date(dateStart as string),
+      gte: new Date(dateStart),
     };
   } else if (dateEnd) {
     where.EVED_START = {
-      lte: new Date(dateEnd as string),
+      lte: new Date(dateEnd),
     };
   }
 
@@ -233,13 +233,24 @@ export const getEventById = async (req: Request, res: Response) => {
 };
 
 // Utility function to check event conflicts
-// Disabled to allow multiple events in the same time slot
-export async function hasEventConflict(
+// Re-enabled for testing suggestAlternativeSlots
+async function hasEventConflict(
   { ACCN_ID, USEN_ID, EVED_START, EVED_END }: Partial<EventCreateInput>,
   excludeId?: number,
 ): Promise<boolean> {
-  // Always return false to allow multiple events in the same time slot
-  return false;
+  if (!ACCN_ID || !USEN_ID || !EVED_START || !EVED_END) {
+    return false; // Not enough info to check for conflict
+  }
+  const conflictingEvent = await prisma.event.findFirst({
+    where: {
+      ACCN_ID,
+      USEN_ID,
+      EVED_START: { lt: EVED_END as Date },
+      EVED_END: { gt: EVED_START as Date },
+      NOT: excludeId ? { EVEN_ID: excludeId } : undefined,
+    },
+  });
+  return !!conflictingEvent;
 }
 
 // Event body validation helper
@@ -285,21 +296,21 @@ function suggestAlternativeSlots(
     end: new Date(event.EVED_END),
   }));
 
-  // Suggest time slots before and after the requested event
-  const baseStart = new Date(startDate);
-  baseStart.setHours(8, 0, 0, 0); // Start at 8 AM
-  const baseEnd = new Date(startDate);
-  baseEnd.setHours(20, 0, 0, 0); // End at 8 PM
+  // Suggest time slots for the current day
+  const baseStartCurrentDay = new Date(startDate);
+  baseStartCurrentDay.setUTCHours(8, 0, 0, 0); // Start at 8 AM UTC
+  const baseEndCurrentDay = new Date(startDate);
+  baseEndCurrentDay.setUTCHours(20, 0, 0, 0); // End at 8 PM UTC
 
-  // Create slots of the requested duration
+  // Create slots of the requested duration for the current day
   for (let i = 0; i < 24 && suggestions.length < maxSuggestions; i++) {
-    const slotStart = new Date(baseStart);
-    slotStart.setMinutes(baseStart.getMinutes() + i * slotDuration);
+    const slotStart = new Date(baseStartCurrentDay);
+    slotStart.setUTCMinutes(baseStartCurrentDay.getUTCMinutes() + i * slotDuration);
     const slotEnd = new Date(slotStart);
-    slotEnd.setMinutes(slotStart.getMinutes() + durationMinutes);
+    slotEnd.setUTCMinutes(slotStart.getUTCMinutes() + durationMinutes);
 
     // Do not exceed end of day
-    if (slotEnd > baseEnd) {
+    if (slotEnd > baseEndCurrentDay) {
       break;
     }
 
@@ -316,22 +327,28 @@ function suggestAlternativeSlots(
 
   // If we don't have enough suggestions, propose slots for the next day
   if (suggestions.length < maxSuggestions) {
-    const nextDay = new Date(startDate);
-    nextDay.setDate(nextDay.getDate() + 1);
-    nextDay.setHours(8, 0, 0, 0);
-    const nextDayEnd = new Date(nextDay);
-    nextDayEnd.setHours(12, 0, 0, 0);
+    const nextDayStart = new Date(startDate);
+    nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
+    nextDayStart.setUTCHours(8, 0, 0, 0); // Start at 8 AM UTC on the next day
+    const nextDayWorkingEnd = new Date(nextDayStart); // Defines the working period for next day suggestions
+    nextDayWorkingEnd.setUTCHours(12, 0, 0, 0);
+    // Consider suggestions up to 12 PM UTC next day
 
+    // Limit to a reasonable number of attempts for next day
     for (let i = 0; i < 8 && suggestions.length < maxSuggestions; i++) {
-      const slotStart = new Date(nextDay);
-      slotStart.setMinutes(nextDay.getMinutes() + i * slotDuration);
+      const slotStart = new Date(nextDayStart);
+      slotStart.setUTCMinutes(nextDayStart.getUTCMinutes() + i * slotDuration);
       const slotEnd = new Date(slotStart);
-      slotEnd.setMinutes(slotStart.getMinutes() + durationMinutes);
+      slotEnd.setUTCMinutes(slotStart.getUTCMinutes() + durationMinutes);
 
-      if (slotEnd > nextDayEnd) {
+      if (slotEnd > nextDayWorkingEnd) {
+        // Do not exceed the defined working period for next day
         break;
       }
 
+      // Check if the time slot is available (assuming existingEvents are for the original day, so next day is clear)
+      // For simplicity in this example, we are not re-fetching events for the next day.
+      // A more robust solution might check next day's availability if relevant.
       suggestions.push({
         start: slotStart.toISOString(),
         end: slotEnd.toISOString(),
@@ -447,7 +464,7 @@ function validateAltSplitFormat(
 }
 
 // Main validation function with reduced complexity
-function validateRequiredEventFields(
+export function validateRequiredEventFields(
   body: any,
   invalidDateStatus: number = 400,
 ): { status: number; details: string[] } | null {
@@ -504,54 +521,38 @@ function normalizeTestFormatFields(body: any): void {
 }
 
 // Helper: shape event response for createEvent
-function shapeEventResponse(
+export function shapeEventResponse(
   req: any,
   sanitizedEvent: any,
-  flags: { hasIso: boolean; hasSplit: boolean; hasTestFormat: boolean },
+  flags: { hasIso: boolean; hasSplit: boolean }, // Removed hasTestFormat
 ): any {
-  let responseObject: any = { ...sanitizedEvent };
-  if (flags.hasTestFormat) {
-    responseObject.DATE_START = req.body.date;
-    responseObject.DATE_END = req.body.date;
-    responseObject.START_TIME = req.body.startTime;
-    responseObject.END_TIME = req.body.endTime;
-  } else if (flags.hasIso) {
-    const startDate = new Date(req.body.EVED_START);
-    const endDate = new Date(req.body.EVED_END);
-    responseObject.DATE_START = startDate.toISOString().split('T')[0];
-    responseObject.DATE_END = endDate.toISOString().split('T')[0];
-    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
-    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
-  } else if (flags.hasSplit) {
-    responseObject.DATE_START = req.body.DATE_START;
-    responseObject.DATE_END = req.body.DATE_END;
-    responseObject.START_TIME = req.body.START_TIME;
-    responseObject.END_TIME = req.body.END_TIME;
-  }
+  const responseObject: any = { ...sanitizedEvent };
+
+  // Only transform if hasSplit is true
+  if (flags.hasSplit) {
+    const startDate = new Date(sanitizedEvent.EVED_START);
+    const endDate = new Date(sanitizedEvent.EVED_END);
+
+    if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+      responseObject.DATE_START = startDate.toISOString().split('T')[0];
+      responseObject.DATE_END = endDate.toISOString().split('T')[0];
+      responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
+      responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
+      delete responseObject.EVED_START;
+      delete responseObject.EVED_END;
+    }
+  } // If hasSplit is false, responseObject remains unchanged (ISO format)
   return responseObject;
 }
 
 // Helper: shape event response for updateEvent
-function shapeUpdateEventResponse(
+export function shapeUpdateEventResponse(
   req: any,
   sanitizedEvent: any,
   flags: { hasIso: boolean; hasSplit: boolean },
 ): any {
-  let responseObject: any = { ...sanitizedEvent };
-  if (flags.hasIso) {
-    const startDate = new Date(req.body.EVED_START);
-    const endDate = new Date(req.body.EVED_END);
-    responseObject.DATE_START = startDate.toISOString().split('T')[0];
-    responseObject.DATE_END = endDate.toISOString().split('T')[0];
-    responseObject.START_TIME = startDate.toISOString().split('T')[1].substring(0, 5);
-    responseObject.END_TIME = endDate.toISOString().split('T')[1].substring(0, 5);
-  } else if (flags.hasSplit) {
-    responseObject.DATE_START = req.body.DATE_START;
-    responseObject.DATE_END = req.body.DATE_END;
-    responseObject.START_TIME = req.body.START_TIME;
-    responseObject.END_TIME = req.body.END_TIME;
-  }
-  return responseObject;
+  // This function is identical to shapeEventResponse, so we delegate to it.
+  return shapeEventResponse(req, sanitizedEvent, flags);
 }
 
 // Helper: validate time string (HH:mm)
@@ -579,7 +580,6 @@ export const createEvent = async (req: Request, res: Response) => {
     const hasIso = req.body.EVED_START && req.body.EVED_END;
     const hasSplit =
       req.body.DATE_START && req.body.START_TIME && req.body.DATE_END && req.body.END_TIME;
-    const hasTestFormat = req.body.date && req.body.startTime && req.body.endTime;
     // Normalize date formats (handles different formats used in tests)
     const { EVED_START, EVED_END } = normalizeRequestDates(req);
     // Do not include validation fields in the object sent to Prisma
@@ -590,7 +590,35 @@ export const createEvent = async (req: Request, res: Response) => {
       USEN_ID: req.body.USEN_ID ?? undefined,
       ACCN_ID: req.body.ACCN_ID ?? undefined,
     };
-    // Conflict checking is disabled to allow multiple events in the same time slot
+    // Only check for conflicts if ALLOW_CONFLICTS is not true
+    if (process.env.ALLOW_CONFLICTS !== 'true') {
+      const conflict = await hasEventConflict(eventInput);
+      if (conflict) {
+        // Simplified existingEvents query for testing purposes
+        const existingEvents = await prisma.event.findMany({
+          where: {
+            ACCN_ID: eventInput.ACCN_ID,
+            // USEN_ID: eventInput.USEN_ID, // Might be too restrictive for general slot suggestion
+            EVED_START: {
+              lte: new Date((eventInput.EVED_START as Date).getTime() + 24 * 60 * 60 * 1000), // Look a day around
+            },
+            EVED_END: {
+              gte: new Date((eventInput.EVED_START as Date).getTime() - 24 * 60 * 60 * 1000),
+            },
+          },
+        });
+        const alternativeSlots = suggestAlternativeSlots(
+          eventInput,
+          existingEvents.map((e: any) => sanitizeEvent(e)),
+        );
+        return res.status(409).json({
+          error: 'Event conflict.',
+          message: 'The requested time slot is already booked.',
+          alternativeSlots,
+        });
+      }
+    }
+
     const newEvent = await prisma.event.create({
       data: eventInput,
     });
@@ -599,7 +627,6 @@ export const createEvent = async (req: Request, res: Response) => {
     const responseObject = shapeEventResponse(req, sanitizedEvent, {
       hasIso,
       hasSplit,
-      hasTestFormat,
     });
     res.status(201).json(responseObject);
   } catch (error) {
