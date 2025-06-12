@@ -1,62 +1,38 @@
-# Build stage
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies with exact versions for reproducibility
-RUN npm ci
-
-# Copy prisma schema
-COPY prisma ./prisma/
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy source code
-COPY . .
-
-# Build TypeScript code
-RUN npm run build
-
-# Production stage
+# Use the official Node.js 20 Alpine image as a base
 FROM node:20-alpine
 
+# Set the working directory in the container
 WORKDIR /app
 
-# Install curl and git for healthcheck and potential operations
-RUN apk --no-cache add curl git
+# Set environment variables
+# These can be overridden at build time using --build-arg
+ARG DATABASE_URL
+ARG ACCESS_API_URL
+ENV DATABASE_URL=${DATABASE_URL}
+ENV ACCESS_API_URL=${ACCESS_API_URL}
+ENV PORT=3000
 
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install all dependencies (critical step!)
+RUN npm ci
 
-# Copy prisma schema and generated client
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma ./prisma
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
+# Copy the rest of the application source code into the container
+COPY . .
 
-# Set environment variables with defaults
-# These can be overridden at runtime
-ENV NODE_ENV="production"
-ENV PORT="3000"
-ENV CORS_ORIGIN="*"
-ENV ACCESS_API_URL="http://localhost:4000/access/check"
-ENV API_VERSION="1.0.0"
-ENV API_TITLE="Calendar Management API"
+# Generate the Prisma client
+RUN npm run generate
+
+# Build the TypeScript project
+RUN npm run build
+
+# Set NODE_ENV to production for the runtime environment
+ENV NODE_ENV=production
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/ || exit 1
-
-# Command to run the application using npm start
+# Command to run the application
 CMD ["npm", "start"]

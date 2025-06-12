@@ -14,7 +14,7 @@ describe('Date Utils', () => {
     it('should create a UTC date from parts', () => {
       // Arrange
       const year = 2025;
-      const month = 5; // Mai
+      const month = 5; // May
       const day = 15;
       const hour = 10;
       const minute = 30;
@@ -36,7 +36,7 @@ describe('Date Utils', () => {
     it('should handle single digit values correctly', () => {
       // Arrange
       const year = 2025;
-      const month = 1; // Janvier
+      const month = 1; // January
       const day = 1;
       const hour = 1;
       const minute = 5;
@@ -186,7 +186,7 @@ describe('Date Utils', () => {
         ACCN_ID: 1,
       };
 
-      // Act - Sans forcer l'enrichissement
+      // Act - Without forcing enrichment
       const resultWithoutForce = enrichEventWithDateTimeParts(event);
 
       // Act - By forcing enrichment
@@ -196,7 +196,7 @@ describe('Date Utils', () => {
       process.env.NODE_ENV = originalNodeEnv;
 
       // Assert
-      expect(resultWithoutForce).toEqual(event); // Pas d'enrichissement
+      expect(resultWithoutForce).toEqual(event); // No enrichment
 
       expect(resultWithForce).toEqual({
         ...event,

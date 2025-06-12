@@ -3,14 +3,15 @@ import { enrichEventWithDateTimeParts } from '../utils/dateUtils';
 import { PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended';
 
-// Mock du module prisma
-jest.mock('../prisma', () => ({
+// Mock the Prisma module
+jest.mock('../../src/prisma', () => ({
+  // Corrected path
   __esModule: true,
   default: mockDeep<PrismaClient>(),
 }));
 
 // Import mock after mock definition
-import prismaMock from '../prisma';
+import prismaMock from '../../src/prisma'; // Corrected path
 
 // Import controllers after configuring mocks
 import {
@@ -121,7 +122,7 @@ describe('Event Controller', () => {
         ACCN_ID: 2,
       };
 
-      // Mock pour hasEventConflict (pas de conflit)
+      // Mock for hasEventConflict (no conflict)
       typedPrismaMock.event.findFirst.mockResolvedValue(null);
 
       // Mock for event creation
@@ -133,49 +134,56 @@ describe('Event Controller', () => {
       // Assert
       expect(typedPrismaMock.event.create).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(201);
-      // Utiliser toEqual au lieu de toHaveBeenCalledWith pour une comparaison plus souple
+      // Use toEqual instead of toHaveBeenCalledWith for a more flexible comparison
       expect(mockResponse.json).toHaveBeenCalled();
     });
 
     it('should create an event even when there is a conflict (conflicts allowed)', async () => {
-      mockRequest.body = {
-        EVEC_LIB: 'New Event',
-        DATE_START: '2025-06-01',
-        START_TIME: '00:00',
-        DATE_END: '2025-06-02',
-        END_TIME: '00:00',
-        USEN_ID: 2,
-        ACCN_ID: 2,
-      };
+      const originalAllowConflicts = process.env.ALLOW_CONFLICTS;
+      process.env.ALLOW_CONFLICTS = 'true';
 
-      const mockEvent = {
-        EVEN_ID: 1,
-        EVEC_LIB: 'New Event',
-        EVED_START: new Date('2025-06-01T00:00:00.000Z'),
-        EVED_END: new Date('2025-06-02T00:00:00.000Z'),
-        USEN_ID: 2,
-        ACCN_ID: 2,
-      };
+      try {
+        mockRequest.body = {
+          EVEC_LIB: 'New Event',
+          DATE_START: '2025-06-01',
+          START_TIME: '00:00',
+          DATE_END: '2025-06-02',
+          END_TIME: '00:00',
+          USEN_ID: 2,
+          ACCN_ID: 2,
+        };
 
-      // Even with a conflict, the event should be created as conflicts are allowed
-      typedPrismaMock.event.findFirst.mockResolvedValue({
-        EVEN_ID: 2,
-        EVEC_LIB: 'Existing Event',
-        EVED_START: new Date('2025-06-01T00:00:00.000Z'),
-        EVED_END: new Date('2025-06-02T00:00:00.000Z'),
-        USEN_ID: 2,
-        ACCN_ID: 2,
-      });
+        const mockEvent = {
+          EVEN_ID: 1,
+          EVEC_LIB: 'New Event',
+          EVED_START: new Date('2025-06-01T00:00:00.000Z'),
+          EVED_END: new Date('2025-06-02T00:00:00.000Z'),
+          USEN_ID: 2,
+          ACCN_ID: 2,
+        };
 
-      typedPrismaMock.event.create.mockResolvedValue(mockEvent);
+        // Even with a conflict, the event should be created as conflicts are allowed
+        typedPrismaMock.event.findFirst.mockResolvedValue({
+          EVEN_ID: 2,
+          EVEC_LIB: 'Existing Event',
+          EVED_START: new Date('2025-06-01T00:00:00.000Z'),
+          EVED_END: new Date('2025-06-02T00:00:00.000Z'),
+          USEN_ID: 2,
+          ACCN_ID: 2,
+        });
 
-      // Act
-      await createEvent(mockRequest as Request, mockResponse as Response);
+        typedPrismaMock.event.create.mockResolvedValue(mockEvent);
 
-      // Assert
-      expect(typedPrismaMock.event.create).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(201);
-      expect(mockResponse.json).toHaveBeenCalled();
+        // Act
+        await createEvent(mockRequest as Request, mockResponse as Response);
+
+        // Assert
+        expect(typedPrismaMock.event.create).toHaveBeenCalled();
+        expect(mockResponse.status).toHaveBeenCalledWith(201);
+        expect(mockResponse.json).toHaveBeenCalled();
+      } finally {
+        process.env.ALLOW_CONFLICTS = originalAllowConflicts;
+      }
     });
   });
 

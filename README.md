@@ -85,31 +85,31 @@ API_TITLE="Calendar Management API"
 
 ### Environment Variables
 
-| Variable       | Description                                        |
-| -------------- | -------------------------------------------------- |
-| DATABASE_URL   | Your PostgreSQL connection string                  |
-| NODE_ENV       | Environment mode ("production" or "development")   |
-| PORT           | Port the server listens on (default: 3000)         |
-| CORS_ORIGIN    | CORS configuration for allowed origins             |
-| ACCESS_API_URL | URL of the Access API for rights verification      |
-| API_VERSION    | API version for Swagger documentation (dev only)   |
-| API_TITLE      | API title for Swagger documentation (dev only)     |
+| Variable       | Description                                      |
+| -------------- | ------------------------------------------------ |
+| DATABASE_URL   | Your PostgreSQL connection string                |
+| NODE_ENV       | Environment mode ("production" or "development") |
+| PORT           | Port the server listens on (default: 3000)       |
+| CORS_ORIGIN    | CORS configuration for allowed origins           |
+| ACCESS_API_URL | URL of the Access API for rights verification    |
+| API_VERSION    | API version for Swagger documentation (dev only) |
+| API_TITLE      | API title for Swagger documentation (dev only)   |
 
 ## 📋 Usage
 
 ### API Endpoints
 
-| Method | Endpoint                    | Description                                |
-| ------ | --------------------------- | ------------------------------------------ |
-| GET    | `/events`                   | List all events                            |
-| GET    | `/events/:id`               | Get an event by ID                         |
-| POST   | `/events`                   | Create a new event                         |
-| PUT    | `/events/:id`               | Update an event                            |
-| DELETE | `/events/:id`               | Delete an event                            |
-| GET    | `/events/filter`            | Filter events by criteria                  |
-| GET    | `/calendar/day`             | Calendar view by day                       |
-| GET    | `/calendar/week`            | Calendar view by week                      |
-| GET    | `/calendar/month`           | Calendar view by month                     |
+| Method | Endpoint          | Description               |
+| ------ | ----------------- | ------------------------- |
+| GET    | `/events`         | List all events           |
+| GET    | `/events/:id`     | Get an event by ID        |
+| POST   | `/events`         | Create a new event        |
+| PUT    | `/events/:id`     | Update an event           |
+| DELETE | `/events/:id`     | Delete an event           |
+| GET    | `/events/filter`  | Filter events by criteria |
+| GET    | `/calendar/day`   | Calendar view by day      |
+| GET    | `/calendar/week`  | Calendar view by week     |
+| GET    | `/calendar/month` | Calendar view by month    |
 
 Authentication and authorization are managed through an Access API.
 Each route is protected by access rights like `getEvents`, `createEvent`, etc., which are verified by calling the Access API URL specified in the environment variables.
@@ -274,6 +274,7 @@ The Calendar Management API uses a robust authorization system that delegates ac
 #### How It Works
 
 1. **Authorization Flow**:
+
    - When a request is made to a protected endpoint, the `authorizeWithApi` middleware intercepts it
    - The middleware extracts the access token from either:
      - The `Authorization` header (format: `Bearer <token>`)
@@ -283,11 +284,13 @@ The Calendar Management API uses a robust authorization system that delegates ac
    - Based on the Access API response, the request is either allowed to proceed or rejected
 
 2. **Right-Based Authorization**:
+
    - Each endpoint is protected by a specific right name (e.g., `createEvent`, `getEvents`, `updateEvent`)
    - The right name is passed to the Access API along with the token
    - This allows for fine-grained access control at the endpoint level
 
 3. **Configuration**:
+
    - The Access API URL is configured via the `ACCESS_API_URL` environment variable
    - Default fallback URL: `http://localhost:4000/access/check`
    - Each middleware can optionally override the API URL if needed
@@ -301,7 +304,7 @@ The Calendar Management API uses a robust authorization system that delegates ac
 
 The Calendar Management API is fully containerized for easy deployment and consistent environments across development and production.
 
-### Prerequisites
+### Docker Prerequisites
 
 - Docker installed on your machine
 - PostgreSQL instance accessible from the container (can be another container or external database)
@@ -325,18 +328,18 @@ docker run -d --name calendar-api \
   calendar-management-api
 ```
 
-### Environment Variables
+### Docker Environment Variables
 
 When running the Docker container, you can override the default environment variables:
 
-| Variable       | Default Value                           | Description                                  |
-| -------------- | --------------------------------------- | -------------------------------------------- |
-| NODE_ENV       | "production"                            | Environment mode                             |
-| PORT           | "3000"                                  | Port the server listens on                   |
-| CORS_ORIGIN    | "*"                                     | CORS configuration                           |
-| ACCESS_API_URL | "http://localhost:4000/access/check"    | URL of the Access API for rights verification|
-| API_VERSION    | "1.0.0"                                 | API version for Swagger documentation         |
-| API_TITLE      | "Calendar Management API"               | API title for Swagger documentation           |
+| Variable       | Default Value                          | Description                                   |
+| -------------- | -------------------------------------- | --------------------------------------------- |
+| NODE_ENV       | "production"                           | Environment mode                              |
+| PORT           | "3000"                                 | Port the server listens on                    |
+| CORS_ORIGIN    | "\*"                                   | CORS configuration                            |
+| ACCESS_API_URL | "<http://localhost:4000/access/check>" | URL of the Access API for rights verification |
+| API_VERSION    | "1.0.0"                                | API version for Swagger documentation         |
+| API_TITLE      | "Calendar Management API"              | API title for Swagger documentation           |
 
 ### Health Check
 
@@ -349,12 +352,16 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 
 ### Docker Image Structure
 
-The Docker image uses a multi-stage build process to create a smaller, more secure production image:
+The Docker image uses a single-stage build to create a container that is simple to build and run. The `Dockerfile` performs the following steps:
 
-1. **Builder stage**: Installs all dependencies, generates Prisma client, and builds the TypeScript code
-2. **Production stage**: Includes only production dependencies and the built application
+1. **Base Image**: Starts from a `node:20` base image.
+2. **Install Dependencies**: Copies `package.json`, `package-lock.json`, and `prisma/schema.prisma` and installs both production and development dependencies using `npm install`.
+3. **Generate Prisma Client**: Runs `npx prisma generate` to create the Prisma client.
+4. **Copy Source Code**: Copies the rest of the application source code.
+5. **Build TypeScript**: Compiles the TypeScript code into JavaScript in the `dist` directory.
+6. **Expose Port and Run**: Exposes port 3000 and sets the `CMD` to start the application with `node dist/src/app.js`.
 
-This approach results in a smaller image size and reduced attack surface.
+This single-stage process is straightforward and suitable for development and production environments where build simplicity is prioritized.
 
 ## 👤 Author
 

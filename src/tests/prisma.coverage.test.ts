@@ -313,6 +313,133 @@ describe('Prisma Module Coverage Tests', () => {
     });
   });
 
+  describe('Mock Client Creation (skipDbConnection)', () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalDatabaseUrl = process.env.DATABASE_URL;
+
+    beforeEach(() => {
+      process.env.DATABASE_URL = 'postgresql://user:pass@host:port/db'; // Needs to be valid to pass initial checks
+    });
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalNodeEnv;
+      process.env.DATABASE_URL = originalDatabaseUrl;
+      delete process.env.SKIP_DB_CONNECTION;
+      delete process.env.CI;
+      jest.resetModules(); // Ensure prisma.ts is re-evaluated
+    });
+
+    it('should return a mock client if SKIP_DB_CONNECTION is true', () => {
+      process.env.SKIP_DB_CONNECTION = 'true';
+      process.env.NODE_ENV = 'production'; // Avoid dev logging
+      const prismaModule = require('../prisma');
+      const client = prismaModule.default;
+
+      expect(client.$connect).toBeDefined();
+      expect(client.$disconnect).toBeDefined();
+      // Check if it's the mock by trying to call a non-existent method on a real client
+      expect(client.user).toBeUndefined();
+      // Further check by ensuring PrismaClient constructor wasn't called for a real client
+      expect(PrismaClient).not.toHaveBeenCalledWith(
+        expect.objectContaining({ log: expect.any(Array) }),
+      );
+    });
+
+    it('should return a mock client if CI is true', () => {
+      process.env.CI = 'true';
+      process.env.NODE_ENV = 'production'; // Avoid dev logging
+      const prismaModule = require('../prisma');
+      const client = prismaModule.default;
+
+      expect(client.$connect).toBeDefined();
+      expect(client.$disconnect).toBeDefined();
+      expect(client.user).toBeUndefined();
+      expect(PrismaClient).not.toHaveBeenCalledWith(
+        expect.objectContaining({ log: expect.any(Array) }),
+      );
+    });
+  });
+
+  describe('__TEST_ONLY__ functionality', () => {
+    it('setTestClient should set a client on global and getClient should retrieve it', () => {
+      const prismaModule = require('../prisma');
+      const mockTestClient = { testProperty: 'testValue' } as any;
+
+      // Set the client
+      prismaModule.__TEST_ONLY__.setTestClient(mockTestClient);
+      // Retrieve the client
+      const retrievedClient = prismaModule.__TEST_ONLY__.getClient();
+
+      expect(retrievedClient).toBe(mockTestClient);
+      expect((global as any).__prismaClient).toBe(mockTestClient);
+
+      // Clean up global
+      delete (global as any).__prismaClient;
+    });
+
+    it('getClient should return the default prisma instance if no test client is set', () => {
+      // Ensure no global client is set
+      delete (global as any).__prismaClient;
+      jest.resetModules(); // Re-import prisma to get its default instance
+      const prismaModule = require('../prisma');
+      const defaultPrismaInstance = prismaModule.default; // This will be the mock from the top of the file in this test env
+
+      const retrievedClient = prismaModule.__TEST_ONLY__.getClient();
+      // In this test environment, default is already a basic mock.
+      // The key is that it's not undefined and not the one we might have set via setTestClient.
+      expect(retrievedClient).toBeDefined();
+      expect(retrievedClient).toBe(defaultPrismaInstance);
+    });
+  });
+
+  describe('Exported prismaClient', () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+
+    afterEach(() => {
+      process.env.NODE_ENV = originalNodeEnv;
+      delete (global as any).__prismaClient; // Clean up global
+      jest.resetModules(); // Ensure prisma.ts is re-evaluated
+    });
+
+    it('should return the __TEST_ONLY__.getClient() when NODE_ENV is test', () => {
+      process.env.NODE_ENV = 'test';
+      const mockGlobalClient = { globalClient: true } as any;
+      (global as any).__prismaClient = mockGlobalClient;
+
+      const prismaModule = require('../prisma');
+      expect(prismaModule.default).toBe(mockGlobalClient);
+    });
+
+    it('should return the default prisma instance when NODE_ENV is not test', () => {
+      process.env.NODE_ENV = 'development';
+      // Ensure no global client is set for this test path
+      delete (global as any).__prismaClient;
+      jest.resetModules(); // Re-import to get the default instance based on new NODE_ENV
+
+      // Re-require @prisma/client to get the mock that the re-imported prisma.ts will use
+      const FreshlyMockedPrismaClient = require('@prisma/client').PrismaClient;
+
+      // We need to ensure PrismaClient mock returns a distinguishable instance
+      const developmentClientInstance = {
+        devInstance: true,
+        $connect: jest.fn(),
+        $disconnect: jest.fn(),
+      };
+      // Apply mockImplementationOnce to the freshly obtained mock
+      (FreshlyMockedPrismaClient as jest.Mock).mockImplementationOnce(
+        () => developmentClientInstance,
+      );
+      process.env.DATABASE_URL = 'postgresql://user:pass@host:5432/db'; // Required for real client path, numeric port
+      delete process.env.SKIP_DB_CONNECTION;
+      delete process.env.CI;
+
+      const prismaModule = require('../prisma');
+      // Check if it's the instance created for 'development' (which has specific logging)
+      // Or, more simply, that it's not undefined and not a globally set mock
+      expect(prismaModule.default).toBe(developmentClientInstance);
+    });
+  });
+
   it('should create Prisma Client with development logging when NODE_ENV is development', () => {
     // Reset the PrismaClient mock to track calls
     (PrismaClient as jest.Mock).mockClear();

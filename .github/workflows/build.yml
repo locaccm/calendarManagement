@@ -19,10 +19,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 22.13.1  
+          node-version: 22.13.1
 
       - name: Install dependencies
-        run: npm install  
+        run: npm install
 
       - name: Set Database URL
         run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
