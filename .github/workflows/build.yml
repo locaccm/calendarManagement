@@ -58,7 +58,7 @@ jobs:
       - name: Run ESLint
         run: npx eslint .
 
-docker-build:
+  docker-build:
     name: Docker Build and Push
     runs-on: ubuntu-latest
     steps:
