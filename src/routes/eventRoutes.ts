@@ -12,6 +12,7 @@ import {
   getEventsForDay,
   getEventsForWeek,
   getEventsForMonth,
+  getActiveLeaseData,
 } from '../controllers/calendarViewController';
 
 /**
@@ -704,6 +705,65 @@ router.get(
   '/calendar/month',
   authorizeWithApi({ rightName: 'getEventsByCalendar' }),
   getEventsForMonth,
+);
+
+/**
+ * @swagger
+ * /active-selection-data:
+ *   get:
+ *     summary: Get users and accommodations with active leases
+ *     description: |
+ *       Returns two lists: one for users (tenants) and one for accommodations,
+ *       both filtered to only include those associated with an active lease.
+ *       This is useful for populating selection dropdowns on the front end.
+ *     tags: [Calendar Views]
+ *     security:
+ *       - apiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Lists of users and accommodations with active leases.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                 accommodations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *             example: {
+ *               "users": [
+ *                 { "id": 1, "name": "John Doe" }
+ *               ],
+ *               "accommodations": [
+ *                 { "id": 101, "name": "Sunny Apartment" }
+ *               ]
+ *             }
+ *       401:
+ *         description: Unauthorized - Missing or invalid API key
+ *       403:
+ *         description: Access denied - Insufficient rights according to access API
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  '/active-selection-data',
+  authorizeWithApi({ rightName: 'getAllEvents' }), // Assuming a right name, can be adjusted
+  getActiveLeaseData,
 );
 
 export default router;

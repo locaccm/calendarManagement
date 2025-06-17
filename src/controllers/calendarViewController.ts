@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../prisma';
 import { Event } from '../models/Event';
+import type { Lease, User, Accommodation } from '@prisma/client';
 
 // Date validation helper (YYYY-MM-DD)
 function isValidDateString(date: string | undefined): boolean {
@@ -195,3 +196,44 @@ function getISOWeekAndYear(date: Date): { week: number; year: number } {
   // Return array of year and week number
   return { week: weekNo, year: d.getFullYear() };
 }
+
+export const getActiveLeaseData = async (req: Request, res: Response) => {
+  try {
+    const activeLeases = await prisma.lease.findMany({
+      where: {
+        LEAB_ACTIVE: true,
+      },
+      include: {
+        user: true,
+        accommodation: true,
+      },
+    });
+
+    const users = new Map();
+    const accommodations = new Map();
+
+    activeLeases.forEach(
+      (lease: Lease & { user: User | null; accommodation: Accommodation | null }) => {
+        if (lease.user && !users.has(lease.user.USEN_ID)) {
+          users.set(lease.user.USEN_ID, {
+            id: lease.user.USEN_ID,
+            name: `${lease.user.USEC_FNAME} ${lease.user.USEC_LNAME}`.trim(),
+          });
+        }
+        if (lease.accommodation && !accommodations.has(lease.accommodation.ACCN_ID)) {
+          accommodations.set(lease.accommodation.ACCN_ID, {
+            id: lease.accommodation.ACCN_ID,
+            name: lease.accommodation.ACCC_NAME,
+          });
+        }
+      },
+    );
+
+    res.status(200).json({
+      users: Array.from(users.values()),
+      accommodations: Array.from(accommodations.values()),
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Exception in getActiveLeaseData', detail: String(err) });
+  }
+};

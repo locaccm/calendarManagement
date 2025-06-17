@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { DeepMockProxy, mockDeep, mockReset } from 'jest-mock-extended';
 
 // Mock du module prisma
@@ -16,6 +16,7 @@ import {
   getEventsForDay,
   getEventsForWeek,
   getEventsForMonth,
+  getActiveLeaseData,
 } from '../controllers/calendarViewController';
 
 // Properly type the mock to avoid TypeScript errors
@@ -374,6 +375,121 @@ describe('Calendar View Controller', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.any(String),
+        }),
+      );
+    });
+  });
+
+  describe('getActiveLeaseData', () => {
+    it('should return unique users and accommodations from active leases', async () => {
+      // Arrange
+      const mockLeases = [
+        {
+          LEAN_ID: 1,
+          USEN_ID: 1,
+          ACCN_ID: 101,
+          LEAD_START: new Date(),
+          LEAD_END: new Date(),
+          LEAN_RENT: new Prisma.Decimal(1200),
+          LEAN_CHARGES: new Prisma.Decimal(100),
+          LEAD_PAYMENT: new Date(),
+          LEAB_ACTIVE: true,
+          user: { USEN_ID: 1, USEC_FNAME: 'John', USEC_LNAME: 'Doe' },
+          accommodation: { ACCN_ID: 101, ACCC_NAME: 'Villa 1' },
+        },
+        {
+          LEAN_ID: 2,
+          USEN_ID: 2,
+          ACCN_ID: 102,
+          LEAD_START: new Date(),
+          LEAD_END: new Date(),
+          LEAN_RENT: new Prisma.Decimal(1500),
+          LEAN_CHARGES: new Prisma.Decimal(150),
+          LEAD_PAYMENT: new Date(),
+          LEAB_ACTIVE: true,
+          user: { USEN_ID: 2, USEC_FNAME: 'Jane', USEC_LNAME: 'Smith' },
+          accommodation: { ACCN_ID: 102, ACCC_NAME: 'Condo 2' },
+        },
+        {
+          LEAN_ID: 3,
+          USEN_ID: 1,
+          ACCN_ID: 101,
+          LEAD_START: new Date(),
+          LEAD_END: new Date(),
+          LEAN_RENT: new Prisma.Decimal(1200),
+          LEAN_CHARGES: new Prisma.Decimal(100),
+          LEAD_PAYMENT: new Date(),
+          LEAB_ACTIVE: true,
+          user: { USEN_ID: 1, USEC_FNAME: 'John', USEC_LNAME: 'Doe' }, // Duplicate user
+          accommodation: { ACCN_ID: 101, ACCC_NAME: 'Villa 1' }, // Duplicate accommodation
+        },
+        {
+          LEAN_ID: 4,
+          USEN_ID: 3,
+          ACCN_ID: 103,
+          LEAD_START: new Date(),
+          LEAD_END: new Date(),
+          LEAN_RENT: new Prisma.Decimal(1000),
+          LEAN_CHARGES: new Prisma.Decimal(50),
+          LEAD_PAYMENT: new Date(),
+          LEAB_ACTIVE: true,
+          user: null, // User can be null
+          accommodation: { ACCN_ID: 103, ACCC_NAME: 'Apartment 3' },
+        },
+      ];
+
+      typedPrismaMock.lease.findMany.mockResolvedValue(mockLeases.filter((l) => l.LEAB_ACTIVE));
+
+      // Act
+      await getActiveLeaseData(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        users: expect.arrayContaining([
+          expect.objectContaining({ id: 1, name: 'John Doe' }),
+          expect.objectContaining({ id: 2, name: 'Jane Smith' }),
+        ]),
+        accommodations: expect.arrayContaining([
+          expect.objectContaining({ id: 101, name: 'Villa 1' }),
+          expect.objectContaining({ id: 102, name: 'Condo 2' }),
+        ]),
+      });
+
+      expect(typedPrismaMock.lease.findMany).toHaveBeenCalledWith({
+        where: { LEAB_ACTIVE: true },
+        include: { user: true, accommodation: true },
+      });
+    });
+
+    it('should return empty arrays if no active leases are found', async () => {
+      // Arrange
+      typedPrismaMock.lease.findMany.mockResolvedValue([]);
+
+      // Act
+      await getActiveLeaseData(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        users: [],
+        accommodations: [],
+      });
+    });
+
+    it('should handle database errors', async () => {
+      // Arrange
+      typedPrismaMock.lease.findMany.mockRejectedValue(new Error('Database error'));
+
+      // Act
+      await getActiveLeaseData(mockRequest as Request, mockResponse as Response);
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.any(String),
+          detail: expect.any(String),
         }),
       );
     });
