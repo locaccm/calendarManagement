@@ -26,11 +26,15 @@ if (!isCoverageTest) {
   // Allow for query parameters at the end of the URL
   const dbUrlPattern = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+(\?.*)?$/;
 
-  // Only validate if we have a DATABASE_URL and are not skipping connection
-  if (process.env.DATABASE_URL && !skipDbConnection) {
-    if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
+  // Validate DATABASE_URL presence and format if not skipping DB connection
+  if (!skipDbConnection) {
+    if (!process.env.DATABASE_URL) {
       throw new Error(
-        `DATABASE_URL has an invalid format: ${process.env.DATABASE_URL.substring(0, 10)}... Expected format: postgresql://user:password@host:port/database`,
+        'DATABASE_URL is not defined. Ensure it is set properly in the environment variables.'
+      );
+    } else if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
+      throw new Error(
+        `DATABASE_URL has an invalid format: "${process.env.DATABASE_URL}". Expected format: postgresql://user:password@host:port/database`
       );
     }
   }
