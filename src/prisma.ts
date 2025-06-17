@@ -30,11 +30,11 @@ if (!isCoverageTest) {
   if (!skipDbConnection) {
     if (!process.env.DATABASE_URL) {
       throw new Error(
-        'DATABASE_URL is not defined. Ensure it is set properly in the environment variables.'
+        'DATABASE_URL is not defined. Ensure it is set properly in the environment variables.',
       );
     } else if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
       throw new Error(
-        `DATABASE_URL has an invalid format: "${process.env.DATABASE_URL}". Expected format: postgresql://user:password@host:port/database`
+        `DATABASE_URL has an invalid format: "${process.env.DATABASE_URL}". Expected format: postgresql://user:password@host:port/database`,
       );
     }
   }
