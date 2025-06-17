@@ -4,95 +4,95 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://calendar_user:97645881@localhost:5432/calendar_test_db"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  USEN_ID      Int      @id @default(autoincrement())
-  USEC_URLPP   String?  @db.VarChar(255)
-  USEC_LNAME   String?  @db.VarChar(255)
-  USEC_FNAME   String?  @db.VarChar(255)
-  USEC_TYPE    String?  @db.VarChar(10)
-  USEC_BIO     String?
-  USED_BIRTH   DateTime? @db.Date
-  USEC_TEL     String?  @db.VarChar(15)
-  USEC_ADDRESS String?
-  USEC_MAIL    String?  @unique @db.VarChar(255)
+  USEN_ID       Int       @id @default(autoincrement())
+  USEC_URLPP    String?   @db.VarChar(255)
+  USEC_LNAME    String?   @db.VarChar(255)
+  USEC_FNAME    String?   @db.VarChar(255)
+  USEC_TYPE     String?   @db.VarChar(10)
+  USEC_BIO      String?
+  USED_BIRTH    DateTime? @db.Date
+  USEC_TEL      String?   @db.VarChar(15)
+  USEC_ADDRESS  String?
+  USEC_MAIL     String?   @unique @db.VarChar(255)
   USEC_PASSWORD String?
-  USEN_INVITE  Int?
-  
+  USEN_INVITE   Int?
+
   // Relations
-  invitedBy    User?    @relation("UserInvites", fields: [USEN_INVITE], references: [USEN_ID], onDelete: SetNull)
-  invitees     User[]   @relation("UserInvites")
-  events       Event[]  @relation("UserEvents")
-  accommodations Accommodation[] @relation("UserAccommodations")
-  messagesReceived Message[] @relation("MessageReceiver")
-  messagesSent    Message[] @relation("MessageSender")
-  leases       Lease[]  @relation("UserLeases")
+  invitedBy        User?           @relation("UserInvites", fields: [USEN_INVITE], references: [USEN_ID], onDelete: SetNull)
+  invitees         User[]          @relation("UserInvites")
+  events           Event[]         @relation("UserEvents")
+  accommodations   Accommodation[] @relation("UserAccommodations")
+  messagesReceived Message[]       @relation("MessageReceiver")
+  messagesSent     Message[]       @relation("MessageSender")
+  leases           Lease[]         @relation("UserLeases")
 
   @@map("USER")
 }
 
 model Accommodation {
-  ACCN_ID       Int      @id @default(autoincrement())
-  ACCC_NAME     String?  @db.VarChar(255)
-  ACCC_TYPE     String?  @db.VarChar(50)
-  ACCC_DESC     String?
-  ACCC_ADDRESS  String?
+  ACCN_ID        Int      @id @default(autoincrement())
+  ACCC_NAME      String?  @db.VarChar(255)
+  ACCC_TYPE      String?  @db.VarChar(50)
+  ACCC_DESC      String?
+  ACCC_ADDRESS   String?
   ACCB_AVAILABLE Boolean? @default(true)
-  USEN_ID       Int?
-  
+  USEN_ID        Int?
+
   // Relations
-  owner         User?    @relation("UserAccommodations", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
-  events        Event[]  @relation("AccommodationEvents")
-  leases        Lease[]  @relation("AccommodationLeases")
+  owner  User?   @relation("UserAccommodations", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
+  events Event[] @relation("AccommodationEvents")
+  leases Lease[] @relation("AccommodationLeases")
 
   @@map("ACCOMMODATION")
 }
 
 model Event {
-  EVEN_ID    Int      @id @default(autoincrement())
-  EVEC_LIB   String?  @db.VarChar(255)
+  EVEN_ID    Int       @id @default(autoincrement())
+  EVEC_LIB   String?   @db.VarChar(255)
   EVED_START DateTime? @db.Timestamp()
   EVED_END   DateTime? @db.Timestamp()
   USEN_ID    Int?
   ACCN_ID    Int?
-  
+
   // Relations
-  user       User?    @relation("UserEvents", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
+  user          User?          @relation("UserEvents", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
   accommodation Accommodation? @relation("AccommodationEvents", fields: [ACCN_ID], references: [ACCN_ID], onDelete: Cascade)
 
   @@map("EVENT")
 }
 
 model Message {
-  MESN_ID       Int      @id @default(autoincrement())
+  MESN_ID       Int       @id @default(autoincrement())
   MESN_RECEIVER Int?
   MESN_SENDER   Int?
   MESC_CONTENT  String?
   MESD_DATE     DateTime? @default(now()) @db.Timestamp()
-  MESB_NEW      Boolean? @default(true)
-  
+  MESB_NEW      Boolean?  @default(true)
+
   // Relations
-  receiver      User?    @relation("MessageReceiver", fields: [MESN_RECEIVER], references: [USEN_ID], onDelete: Cascade)
-  sender        User?    @relation("MessageSender", fields: [MESN_SENDER], references: [USEN_ID], onDelete: Cascade)
+  receiver User? @relation("MessageReceiver", fields: [MESN_RECEIVER], references: [USEN_ID], onDelete: Cascade)
+  sender   User? @relation("MessageSender", fields: [MESN_SENDER], references: [USEN_ID], onDelete: Cascade)
 
   @@map("MESSAGE")
 }
 
 model Lease {
-  LEAN_ID      Int      @id @default(autoincrement())
+  LEAN_ID      Int       @id @default(autoincrement())
   LEAD_START   DateTime? @db.Date
   LEAD_END     DateTime? @db.Date
-  LEAN_RENT    Decimal? @db.Decimal(10, 2)
-  LEAN_CHARGES Decimal? @db.Decimal(10, 2)
+  LEAN_RENT    Decimal?  @db.Decimal(10, 2)
+  LEAN_CHARGES Decimal?  @db.Decimal(10, 2)
   LEAD_PAYMENT DateTime? @db.Date
-  LEAB_ACTIVE  Boolean? @default(true)
+  LEAB_ACTIVE  Boolean?  @default(true)
   USEN_ID      Int?
   ACCN_ID      Int?
-  
+
   // Relations
-  user          User?    @relation("UserLeases", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
+  user          User?          @relation("UserLeases", fields: [USEN_ID], references: [USEN_ID], onDelete: Cascade)
   accommodation Accommodation? @relation("AccommodationLeases", fields: [ACCN_ID], references: [ACCN_ID], onDelete: Cascade)
 
   @@map("LEASE")
