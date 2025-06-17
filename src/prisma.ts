@@ -13,7 +13,7 @@ if (!isCoverageTest) {
   }
 
   // Determine if we should skip DB connection (CI or explicit skip flag)
-  const skipDbConnection = process.env.SKIP_DB_CONNECTION === 'true' || process.env.CI === 'true';
+  const skipDbConnection = process.env.SKIP_DB_CONNECTION === 'true';
 
   // Throw a clear error if DATABASE_URL is still not set
   if (!process.env.DATABASE_URL && !skipDbConnection) {
@@ -22,19 +22,11 @@ if (!isCoverageTest) {
     );
   }
 
-  // Validate that the DATABASE_URL has the correct format
-  // Allow for query parameters at the end of the URL
-  const dbUrlPattern = /^postgresql:\/\/[^:]+:[^@]+@[^:]+:\d+\/[^?]+(\?.*)?$/;
-
   // Validate DATABASE_URL presence and format if not skipping DB connection
   if (!skipDbConnection) {
     if (!process.env.DATABASE_URL) {
       throw new Error(
         'DATABASE_URL is not defined. Ensure it is set properly in the environment variables.',
-      );
-    } else if (!dbUrlPattern.test(process.env.DATABASE_URL)) {
-      throw new Error(
-        `DATABASE_URL has an invalid format: "${process.env.DATABASE_URL}". Expected format: postgresql://user:password@host:port/database`,
       );
     }
   }
@@ -54,7 +46,7 @@ const createPrismaClient = (): PrismaClient => {
   }
 
   // Determine if we should skip DB connection (CI or explicit skip flag)
-  const skipDbConnection = process.env.SKIP_DB_CONNECTION === 'true' || process.env.CI === 'true';
+  const skipDbConnection = process.env.SKIP_DB_CONNECTION === 'true';
 
   // If we're in CI or skipping DB connection, use a mock client
   if (skipDbConnection) {
